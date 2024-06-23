@@ -1,5 +1,5 @@
-import { IUserDB } from './users.types';
-import { db } from '../../../../../comments-api/src/common/db/knex';
+import { IUserDB } from './users.types.js';
+import { db } from '../../../common/db/knex.js';
 
 const getUserByEmailName = async (email: string, user_name?: string): Promise<Array<IUserDB>> => {
   return db

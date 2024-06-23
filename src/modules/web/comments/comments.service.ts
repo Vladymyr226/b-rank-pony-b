@@ -1,5 +1,5 @@
-import { commentsRepository } from './comments.repository';
-import { ICommentDB } from './comments.types';
+import { commentsRepository } from './comments.repository.js';
+import { ICommentDB } from './comments.types.js';
 
 const insertComment = async (text: string, parent_id: any, limit: number, offset: number, users_id: number) => {
   await commentsRepository.insertComment({ text, parent_id, users_id });

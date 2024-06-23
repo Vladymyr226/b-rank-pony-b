@@ -1,5 +1,5 @@
 import express, { Application, Router } from 'express';
-import { ExpressRequest, ExpressResponse } from '../../../common/types';
+import { ExpressRequest, ExpressResponse } from '../../../common/types.js';
 
 import pkgInfo from '../../../../../comments-api/package.json';
 

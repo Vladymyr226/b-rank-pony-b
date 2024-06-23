@@ -1,5 +1,5 @@
-import { ICommentDB } from './comments.types';
-import { db } from '../../../../../comments-api/src/common/db/knex';
+import { ICommentDB } from './comments.types.js';
+import { db } from '../../../common/db/knex.js';
 
 const insertComment = async (data: ICommentDB): Promise<{ totalCount: number; comments: Array<ICommentDB> }> => {
   return db('comments').insert(data);

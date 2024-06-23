@@ -1,7 +1,7 @@
-import { getLogger } from '../../../../../comments-api/src/common/logging';
-import { usersRepository } from './users.repository';
-import { IUserDB } from './users.types';
-import { generateToken } from '../../common/utils/token.utils';
+import { usersRepository } from './users.repository.js';
+import { IUserDB } from './users.types.js';
+import { generateToken } from '../../common/utils/token.utils.js';
+import { getLogger } from '../../../common/logging.js';
 
 const createUser = async (data: any) => {
   const { user_name, email, home_page } = data;

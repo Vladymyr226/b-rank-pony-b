@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { CommentsController } from './comments.controller';
-import { authMiddleware } from './middlewares/comments.auth';
-import { validateSchema } from '../../../../../comments-api/src/common/middlewares/validate';
-import { commentSchema } from './middlewares/comments.schema';
+import { CommentsController } from './comments.controller.js';
+import { authMiddleware } from './middlewares/comments.auth.js';
+import { commentSchema } from './middlewares/comments.schema.js';
+import { validateSchema } from '../../../common/middlewares/validate.js';
 
 export const createCommentsRouter = () => {
   const router = Router();

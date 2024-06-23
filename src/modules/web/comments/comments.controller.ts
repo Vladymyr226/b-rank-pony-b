@@ -1,7 +1,7 @@
-import { ExpressRequest, ExpressResponse } from '../../../../../comments-api/src/common/types';
-import { usersRepository } from '../users/users.repository';
-import { IUserDB } from '../users/users.types';
-import { commentsService } from './comments.service';
+import { usersRepository } from '../users/users.repository.js';
+import { IUserDB } from '../users/users.types.js';
+import { commentsService } from './comments.service.js';
+import { ExpressRequest, ExpressResponse } from '../../../common/types.js';
 
 const postComment = async (req: ExpressRequest, res: ExpressResponse) => {
   const { text, parent_id, limit, offset } = req.query;

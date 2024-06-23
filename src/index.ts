@@ -1,12 +1,12 @@
 import './common/config';
-import { getLogger } from './common/logging';
-import { runMigrations } from './common/db/migrations';
-import { APP_TYPE } from './common/constants';
+import { getLogger } from './common/logging.js';
+import { runMigrations } from './common/db/migrations.js';
+import { APP_TYPE } from './common/constants/index.js';
 import { Server } from 'http';
 import * as express from 'express';
 
 import 'express-async-errors';
-import { buildApp } from './modules/web/app';
+import { buildApp } from './modules/web/app.js';
 
 const { ENVIRONMENT, PORT, AUTO_MIGRATION } = process.env;
 let _server: Server = null;

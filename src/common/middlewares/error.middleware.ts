@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import Joi from 'joi';
-import { APIError, HttpStatusCode } from '../errors';
-import { getLogger } from '../logging';
+import { APIError, HttpStatusCode } from '../errors.js';
+import { getLogger } from '../logging.js';
 
 const { ValidationError } = Joi;
 
