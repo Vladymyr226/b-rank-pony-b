@@ -1,6 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api'
 import Calendar from 'telegram-inline-calendar'
-import config from 'config'
 import { Configuration, OpenAIApi } from 'openai'
 import express from 'express'
 import fs from 'fs'
@@ -9,7 +8,7 @@ const TOKEN = '7125472368:AAG-I3gg-ctP86N5FGBEovFDybIsB_wJOIk'
 const PORT = process.env.PORT || 4000
 
 const configuration = new Configuration({
-  apiKey: config.get('OPENAI_KEY'),
+  apiKey: 'sk-proj-2T8ik8A3MQRcTYtIYpmcT3BlbkFJrdlRKaLkT7Ee8iV05R1e',
 })
 const openai = new OpenAIApi(configuration)
 
