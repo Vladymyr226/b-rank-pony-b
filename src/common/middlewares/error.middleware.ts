@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import Joi from 'joi';
-import { APIError, HttpStatusCode } from '../errors.js';
-import { getLogger } from '../logging.js';
-
-const { ValidationError } = Joi;
+import { ValidationError } from 'joi';
+import { APIError, HttpStatusCode } from '../errors';
+import { getLogger } from '../logging';
 
 export async function errorHandlerMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
   let statusCode = err.status || 500;

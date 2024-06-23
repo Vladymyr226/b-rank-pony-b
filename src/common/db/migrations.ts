@@ -1,6 +1,6 @@
 import knex from 'knex';
-import { getLogger } from '../logging.js';
-import { getKnexConfig } from './knex.js';
+import { getLogger } from '../logging';
+import { getKnexConfig } from './knex';
 
 export async function runMigrations() {
   getLogger().info('Running DB migrations...');

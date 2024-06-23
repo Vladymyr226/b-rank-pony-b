@@ -1,8 +1,8 @@
-# PONY
+# shop-API
 
 ## 1.Software requirements:
 
-NodeJS v22.3.0
+NodeJS v19.3.0
 
 ## 2.Installation
 

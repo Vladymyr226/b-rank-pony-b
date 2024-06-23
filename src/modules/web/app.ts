@@ -1,37 +1,39 @@
 import express, { Request, Response, Router } from 'express';
-import JSON from 'body-parser';
+import { json, urlencoded } from 'body-parser';
+import { createRequestLogger } from '../../common/middlewares/logger';
 import cors from 'cors';
-import { configureHealthCheckRouter } from '../common/routes/healthcheck.routes.js';
-import { createCommentsRouter } from './comments/comments.routes.js';
-import { createUsersRouter } from './users/users.routes.js';
-import { createRequestLogger } from '../../common/middlewares/logger.js';
-import { errorHandlerMiddleware } from '../../common/middlewares/error.middleware.js';
-const { json, urlencoded } = JSON;
+import { configureHealthCheckRouter } from '../common/routes/healthcheck.routes';
+import { errorHandlerMiddleware } from '../../common/middlewares/error.middleware';
 
 export function buildApp(): express.Application {
   const app = express();
-  app.use(cors());
+  // app.use(cors());
   app.use(json());
   app.use(urlencoded({ extended: false }));
   app.use(createRequestLogger);
 
-  configureRoutes(app);
+  app.get('/', (req: Request, res: Response) => {
+    res.send('Hello World!');
+  });
 
-  app.use(errorHandlerMiddleware);
+  // configureRoutes(app);
+
+  // app.use(errorHandlerMiddleware);
+
   return app;
 }
 
-function configureApiRoutes(): Router {
-  const router = Router();
-  router.use('/comments', createCommentsRouter());
-  router.use('/users', createUsersRouter());
-
-  return router;
-}
+// function configureApiRoutes(): Router {
+//   const router = Router();
+//   router.use('/comments', createCommentsRouter());
+//   router.use('/users', createUsersRouter());
+//
+//   return router;
+// }
 
 function configureRoutes(app: express.Application) {
   configureHealthCheckRouter(app);
-  app.use('/api', configureApiRoutes());
+  // app.use('/api', configureApiRoutes());
   app.use((req: Request, res: Response) => {
     res.status(404).json({
       message: 'Not found',

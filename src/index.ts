@@ -1,58 +1,46 @@
 import './common/config';
-import { getLogger } from './common/logging.js';
-import { runMigrations } from './common/db/migrations.js';
-import { APP_TYPE } from './common/constants/index.js';
+import { buildApp } from './modules/web/app';
+import { getLogger } from './common/logging';
+// import { runMigrations } from './common/db/migrations';
+import { APP_TYPE } from './common/constants';
 import { Server } from 'http';
-import * as express from 'express';
-
+import express, { Request, Response } from 'express';
 import 'express-async-errors';
-import { buildApp } from './modules/web/app.js';
+import { json, urlencoded } from 'body-parser';
+import { createRequestLogger } from './common/middlewares/logger';
 
 const { ENVIRONMENT, PORT, AUTO_MIGRATION } = process.env;
-let _server: Server = null;
 
-async function init() {
-  const log = getLogger();
-  log.info(
-    {
-      environment: ENVIRONMENT,
-    },
-    'app_start',
-  );
+const app = express();
 
-  let serverApp: express.Application = null;
-  log.info({ type: process.env.APP_TYPE }, 'Starting application');
+app.use(express.json());
 
-  switch (process.env.APP_TYPE) {
-    case APP_TYPE.BOT: {
-      if (+AUTO_MIGRATION) await runMigrations();
-      serverApp = buildApp();
-      break;
-    }
-  }
+// get post routes
+app.get('/post', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'post routes' });
+});
 
-  if (!serverApp) {
-    throw new Error('No server app was defined, terminating');
-  }
+// root routes
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'Hello World' });
+});
 
-  let port = parseInt(PORT, 10);
-
-  if (!port) {
-    log.warn({}, 'Port is not defined, using default');
-    port = 5000;
-  }
-
-  _server = serverApp.listen(port, () => {
-    log.info(
-      {
-        port: PORT,
-      },
-      'listening...',
-    );
-  });
+if (!app) {
+  throw new Error('No server app was defined, terminating');
 }
 
-init().catch((err) => {
-  getLogger().error(err, 'Root error');
-  process.exit(1);
+let port = parseInt(PORT, 10);
+
+if (!port) {
+  console.warn({}, 'Port is not defined, using default');
+  port = 5000;
+}
+
+app.listen(port, () => {
+  console.log('Listening on port ' + port);
 });
+
+console.log(222222222, app);
+export default app;
+
+// app.listen(PORT, () => {console.log('Listening on port ' + PORT)});

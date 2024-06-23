@@ -7,6 +7,7 @@ export enum HttpStatusCode {
 }
 
 class BaseError extends Error {
+  public readonly name: string;
   public readonly httpCode: HttpStatusCode;
 
   constructor(httpCode: HttpStatusCode, message: string) {

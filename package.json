@@ -2,15 +2,9 @@
   "name": "pony",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "dev": "npx nodemon",
-    "build": "rimraf ./dist && npx tsc",
-    "start": "npm run build && node dist/index",
-    "lint": "npx eslint ./src",
-    "format": "npx eslint ./src --fix"
+    "dev": "npx nodemon"
   },
-  "type": "module",
   "dependencies": {
     "@types/bunyan": "^1.8.11",
     "@types/cors": "^2.8.17",
