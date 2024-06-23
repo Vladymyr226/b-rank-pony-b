@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { UsersController } from './users.controller';
+import { validateSchema } from '../../../../../comments-api/src/common/middlewares/validate';
+import { userSchema } from './validation/user.schema';
+
+export const createUsersRouter = () => {
+  const router = Router();
+  router.post('/registration', validateSchema(userSchema), UsersController.createUser);
+  router.post('/login', validateSchema(userSchema), UsersController.login);
+
+  return router;
+};
