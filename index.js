@@ -2,18 +2,22 @@ import TelegramBot from 'node-telegram-bot-api'
 import Calendar from 'telegram-inline-calendar'
 import config from 'config'
 import { Configuration, OpenAIApi } from 'openai'
+import express from 'express'
 import fs from 'fs'
 
 const TOKEN = '7125472368:AAG-I3gg-ctP86N5FGBEovFDybIsB_wJOIk'
+const PORT = process.env.PORT || 4000
 
 const configuration = new Configuration({
   apiKey: config.get('OPENAI_KEY'),
 })
 const openai = new OpenAIApi(configuration)
 
-const bot = new TelegramBot(TOKEN, {
-  polling: true,
-})
+const bot = new TelegramBot(TOKEN)
+bot.setWebHook(`https://your-vercel-app-url.vercel.app/webhook`)
+
+const app = express()
+app.use(express.json())
 
 const calendar = new Calendar(bot, {
   date_format: 'DD-MM-YYYY о HH:mm',
@@ -95,7 +99,7 @@ bot.on('callback_query', (query) => {
   }
 
   if (query.message.message_id == calendar.chats.get(query.message.chat.id)) {
-    res = calendar.clickButtonCalendar(query)
+    const res = calendar.clickButtonCalendar(query)
 
     if (res !== -1) {
       bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + res)
@@ -105,12 +109,6 @@ bot.on('callback_query', (query) => {
   if (data === '4') {
     bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.')
   }
-})
-
-// bot.on('callback_query', (query) => {})
-
-bot.on('polling_error', (error) => {
-  console.log(error)
 })
 
 bot.on('contact', (msg) => {
@@ -128,31 +126,17 @@ bot.on('photo', async (msg) => {
 
   const prompt = 'show more haircut options for this person'
 
-  // model: 'dall-e-2',
-  // image: fs.createReadStream(photoUrl),
-  // prompt,
-  // n: 1,
-  // size: '1024x1024',
-
   try {
     const response = await openai.createImageEdit(
       fs.createReadStream('./img/Volodya.jpeg'),
       fs.createReadStream('./img/Volodya.jpeg'),
-      // prompt,
       'show more haircut options for this person',
-
-      // fs.createReadStream(photoUrl),
-
-      // fs.createReadStream('mask.png'),
-
       1,
       '1024x1024'
     )
-    image_url = response.data[0].url
+    const imageUrl = response.data[0].url
 
-    console.log(image_url)
-
-    // await bot.sendPhoto(chatId, image_url)
+    console.log(imageUrl)
 
     bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
   } catch (error) {
@@ -161,12 +145,11 @@ bot.on('photo', async (msg) => {
   }
 })
 
-// const prompt = 'unicorn with banana'
-// const size = '1024x1024'
-// const number = 1
+app.post('/webhook', (req, res) => {
+  bot.processUpdate(req.body)
+  res.sendStatus(200)
+})
 
-// const response = await openai.createImage({
-//   prompt,
-//   size,
-//   n: Number(number),
-// })
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
+})
