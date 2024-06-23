@@ -13,8 +13,12 @@ const configuration = new Configuration({
 })
 const openai = new OpenAIApi(configuration)
 
-const bot = new TelegramBot(TOKEN)
-bot.setWebHook(`https://your-vercel-app-url.vercel.app/webhook`)
+// const bot = new TelegramBot(TOKEN)
+// bot.setWebHook(`https://your-vercel-app-url.vercel.app/webhook`)
+
+const bot = new TelegramBot(TOKEN, {
+  polling: true,
+})
 
 const app = express()
 app.use(express.json())
@@ -145,10 +149,10 @@ bot.on('photo', async (msg) => {
   }
 })
 
-app.post('/webhook', (req, res) => {
-  bot.processUpdate(req.body)
-  res.sendStatus(200)
-})
+// app.post('/webhook', (req, res) => {
+//   bot.processUpdate(req.body)
+//   res.sendStatus(200)
+// })
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
