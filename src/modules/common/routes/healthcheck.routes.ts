@@ -1,7 +1,7 @@
-import express, { Application, Router } from 'express';
+import express, { Application } from 'express';
 import { ExpressRequest, ExpressResponse } from '../../../common/types.js';
 
-import pkgInfo from '../../../../../comments-api/package.json';
+import pkgInfo from '../../../../package.json';
 
 const { ENVIRONMENT } = process.env;
 
