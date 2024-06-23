@@ -1,19 +1,19 @@
-import TelegramBot from 'node-telegram-bot-api'
-import Calendar from 'telegram-inline-calendar'
-import config from 'config'
-import { Configuration, OpenAIApi } from 'openai'
-import fs from 'fs'
+import TelegramBot from 'node-telegram-bot-api';
+import Calendar from 'telegram-inline-calendar';
+import config from 'config';
+import { Configuration, OpenAIApi } from 'openai';
+import fs from 'fs';
 
-const TOKEN = '7125472368:AAG-I3gg-ctP86N5FGBEovFDybIsB_wJOIk'
+const TOKEN = '7125472368:AAG-I3gg-ctP86N5FGBEovFDybIsB_wJOIk';
 
 const configuration = new Configuration({
   apiKey: config.get('OPENAI_KEY'),
-})
-const openai = new OpenAIApi(configuration)
+});
+const openai = new OpenAIApi(configuration);
 
 const bot = new TelegramBot(TOKEN, {
   polling: true,
-})
+});
 
 const calendar = new Calendar(bot, {
   date_format: 'DD-MM-YYYY о HH:mm',
@@ -23,7 +23,7 @@ const calendar = new Calendar(bot, {
   time_range: '08:00-20:00',
   time_step: '40m',
   custom_start_msg: 'Будь ласка, оберіть зручну для вас дату та час 🙂',
-})
+});
 
 const options = {
   reply_markup: {
@@ -41,18 +41,18 @@ const options = {
     resize_keyboard: true,
     one_time_keyboard: true,
   },
-}
+};
 
 bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
-})
+  bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+});
 bot.onText('Чина', (msg) => {
-  bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а')
-})
+  bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а');
+});
 
 bot.on('callback_query', (query) => {
-  const chatId = query.message.chat.id
-  const data = query.data
+  const chatId = query.message.chat.id;
+  const data = query.data;
 
   if (data === '1') {
     bot.sendMessage(
@@ -72,61 +72,57 @@ bot.on('callback_query', (query) => {
 `,
       {
         parse_mode: 'Markdown',
-      }
-    )
+      },
+    );
   }
 
   if (data === '2') {
-    bot.sendMessage(
-      chatId,
-      'Надішліть ваш контакт, натиснувши кнопку "Поділитися моїм контактом"',
-      {
-        reply_markup: {
-          keyboard: [[{ text: 'Поділитися моїм контактом', request_contact: true }]],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      }
-    )
+    bot.sendMessage(chatId, 'Надішліть ваш контакт, натиснувши кнопку "Поділитися моїм контактом"', {
+      reply_markup: {
+        keyboard: [[{ text: 'Поділитися моїм контактом', request_contact: true }]],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    });
   }
 
   if (data === '3') {
-    calendar.startNavCalendar(query.message)
+    calendar.startNavCalendar(query.message);
   }
 
   if (query.message.message_id == calendar.chats.get(query.message.chat.id)) {
-    res = calendar.clickButtonCalendar(query)
+    // res = calendar.clickButtonCalendar(query);
 
     if (res !== -1) {
-      bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + res)
+      bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + res);
     }
   }
 
   if (data === '4') {
-    bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.')
+    bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.');
   }
-})
+});
 
 // bot.on('callback_query', (query) => {})
 
 bot.on('polling_error', (error) => {
-  console.log(error)
-})
+  console.log(error);
+});
 
 bot.on('contact', (msg) => {
-  const chatId = msg.chat.id
-  bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
-  bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
-})
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`);
+  bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+});
 
 bot.on('photo', async (msg) => {
-  const chatId = msg.chat.id
-  const photoId = msg.photo[0].file_id
+  const chatId = msg.chat.id;
+  const photoId = msg.photo[0].file_id;
 
-  const photoInfo = await bot.getFile(photoId)
-  const photoUrl = `https://api.telegram.org/file/bot${TOKEN}/${photoInfo.file_path}`
+  const photoInfo = await bot.getFile(photoId);
+  const photoUrl = `https://api.telegram.org/file/bot${TOKEN}/${photoInfo.file_path}`;
 
-  const prompt = 'show more haircut options for this person'
+  const prompt = 'show more haircut options for this person';
 
   // model: 'dall-e-2',
   // image: fs.createReadStream(photoUrl),
@@ -146,20 +142,20 @@ bot.on('photo', async (msg) => {
       // fs.createReadStream('mask.png'),
 
       1,
-      '1024x1024'
-    )
-    image_url = response.data[0].url
+      '1024x1024',
+    );
+    // image_url = response.data[0].url;
 
-    console.log(image_url)
+    console.log(image_url);
 
     // await bot.sendPhoto(chatId, image_url)
 
-    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
   } catch (error) {
-    console.error('Error:', error)
-    bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
+    console.error('Error:', error);
+    bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.');
   }
-})
+});
 
 // const prompt = 'unicorn with banana'
 // const size = '1024x1024'
