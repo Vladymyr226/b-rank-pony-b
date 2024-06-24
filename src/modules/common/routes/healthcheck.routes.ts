@@ -1,6 +1,6 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express'
 
-import pkgInfo from '../../../../package.json';
+import pkgInfo from '../../../../package.json'
 
 export function configureHealthCheckRouter(app: Application) {
   app.get(['/info', '/', '/healthz', '/healthcheck'], (req: Request, res: Response) => {
@@ -13,14 +13,14 @@ export function configureHealthCheckRouter(app: Application) {
           time: new Date().toUTCString(),
           version: pkgInfo.version,
         }),
-      );
-  });
+      )
+  })
 }
 
 export function createSimpleHealthCheckApp(): Application {
-  const app = express();
+  const app = express()
 
-  configureHealthCheckRouter(app);
+  configureHealthCheckRouter(app)
 
-  return app;
+  return app
 }

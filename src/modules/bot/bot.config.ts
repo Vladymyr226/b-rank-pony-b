@@ -1,16 +1,17 @@
-import Calendar from "telegram-inline-calendar";
-import {TelegramBot} from 'node-telegram-bot-api';
+import Calendar from 'telegram-inline-calendar'
+import { TelegramBot } from 'node-telegram-bot-api'
 
-export const tgCalendar = (bot:TelegramBot)=>{
+export const tgCalendar = (bot: TelegramBot) => {
   return new Calendar(bot, {
-  date_format: 'DD-MM-YYYY о HH:mm',
-  language: 'en',
-  start_week_day: 1,
-  time_selector_mod: true,
-  time_range: '08:00-20:00',
-  time_step: '40m',
-  custom_start_msg: 'Будь ласка, оберіть зручну для вас дату та час 🙂',
-})};
+    date_format: 'DD-MM-YYYY о HH:mm',
+    language: 'en',
+    start_week_day: 1,
+    time_selector_mod: true,
+    time_range: '08:00-20:00',
+    time_step: '40m',
+    custom_start_msg: 'Будь ласка, оберіть зручну для вас дату та час 🙂',
+  })
+}
 
 export const options = {
   reply_markup: {
@@ -28,4 +29,4 @@ export const options = {
     resize_keyboard: true,
     one_time_keyboard: true,
   },
-};
+}

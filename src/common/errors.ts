@@ -7,15 +7,15 @@ export enum HttpStatusCode {
 }
 
 class BaseError extends Error {
-  public readonly httpCode: HttpStatusCode;
+  public readonly httpCode: HttpStatusCode
 
   constructor(httpCode: HttpStatusCode, message: string) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
+    super(message)
+    Object.setPrototypeOf(this, new.target.prototype)
 
-    this.httpCode = httpCode;
+    this.httpCode = httpCode
 
-    Error.captureStackTrace(this);
+    Error.captureStackTrace(this)
   }
 }
 
@@ -24,6 +24,6 @@ class BaseError extends Error {
  * */
 export class APIError extends BaseError {
   constructor(httpCode = HttpStatusCode.INTERNAL_SERVER, message: any) {
-    super(httpCode, message);
+    super(httpCode, message)
   }
 }
