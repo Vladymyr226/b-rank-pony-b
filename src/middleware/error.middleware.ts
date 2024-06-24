@@ -3,6 +3,10 @@ import { ValidationError } from 'joi'
 import { APIError, HttpStatusCode } from './errors';
 import { getLogger } from './logging';
 
+export const CREATED = 'CREATED'
+export const UPDATED = 'UPDATED'
+export const DELETED = 'DELETED'
+
 export async function errorHandlerMiddleware(err: any, res: Response) {
   let statusCode = err.status || 500
 
