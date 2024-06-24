@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { userSchema } from '../validation/user.schema'
-import { validateSchema } from '../../../middleware/validate.schema'
+import { validateSchema } from '../../../common/middleware/validate.schema'
 import { registration, login, getUsers } from '../controllers/users.controller'
 
 export function createAuthRouter() {

@@ -4,14 +4,14 @@ import { createAuthRouter } from './modules/auth/routes/users'
 import cors from 'cors'
 import { Router } from 'express'
 import { createPaymentRouter } from './modules/payment/routes/payment'
-import { errorHandlerMiddleware } from './middleware/error.middleware'
-import './configs/dotenv.config'
+import { errorHandlerMiddleware } from './common/middleware/error.middleware'
+import './common/dotenv.config'
 import { createCabinetRouter } from './modules/routes/routes'
 import TelegramBot from 'node-telegram-bot-api';
 import Calendar from 'telegram-inline-calendar';
 import OpenAIApi from 'openai';
 import { configureHealthCheckRouter } from "./modules/common/routes/healthcheck.routes";
-import { getLogger } from "./middleware/logging";
+import { getLogger } from "./common/logging";
 
 const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_KEY,
