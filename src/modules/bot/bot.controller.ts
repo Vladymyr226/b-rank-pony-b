@@ -1,19 +1,17 @@
-import {TelegramBot} from 'node-telegram-bot-api';
-import { tgCalendar, options } from "./bot.config";
+import { TelegramBot } from 'node-telegram-bot-api'
+import { tgCalendar, options } from './bot.config'
 
-
-export const botController = (bot:TelegramBot)=>{
-
+export const botController = (bot: TelegramBot) => {
   bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
-  });
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
+  })
   bot.onText('Чина', (msg) => {
-    bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а');
-  });
+    bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а')
+  })
 
   bot.on('callback_query', (query) => {
-    const chatId = query.message.chat.id;
-    const data = query.data;
+    const chatId = query.message.chat.id
+    const data = query.data
 
     if (data === '1') {
       bot.sendMessage(
@@ -34,7 +32,7 @@ export const botController = (bot:TelegramBot)=>{
         {
           parse_mode: 'Markdown',
         },
-      );
+      )
     }
 
     if (data === '2') {
@@ -44,46 +42,42 @@ export const botController = (bot:TelegramBot)=>{
           resize_keyboard: true,
           one_time_keyboard: true,
         },
-      });
+      })
     }
 
     if (data === '3') {
-      tgCalendar(bot).startNavCalendar(query.message);
+      tgCalendar(bot).startNavCalendar(query.message)
     }
 
-    if (query.message.message_id == tgCalendar(bot).chats.get(query.message.chat.id)) {
-      // res = calendar.clickButtonCalendar(query);
+    const calendarTimeResponse = tgCalendar(bot).clickButtonCalendar(query)
 
-      // if (res !== -1) {
-      //   bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + res);
-      // }
+    if (calendarTimeResponse !== -1) {
+      bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
     }
 
     if (data === '4') {
-      bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.');
+      bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.')
     }
-  });
-
-// bot.on('callback_query', (query) => {})
+  })
 
   bot.on('polling_error', (error) => {
-    console.log(error);
-  });
+    console.log(error)
+  })
 
   bot.on('contact', (msg) => {
-    const chatId = msg.chat.id;
-    bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`);
-    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
-  });
+    const chatId = msg.chat.id
+    bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
+  })
 
   bot.on('photo', async (msg) => {
-    const chatId = msg.chat.id;
-    const photoId = msg.photo[0].file_id;
+    const chatId = msg.chat.id
+    const photoId = msg.photo[0].file_id
 
-    const photoInfo = await bot.getFile(photoId);
-    const photoUrl = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${photoInfo.file_path}`;
+    const photoInfo = await bot.getFile(photoId)
+    const photoUrl = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${photoInfo.file_path}`
 
-    const prompt = 'show more haircut options for this person';
+    const prompt = 'show more haircut options for this person'
 
     // model: 'dall-e-2',
     // image: fs.createReadStream(photoUrl),
@@ -111,11 +105,10 @@ export const botController = (bot:TelegramBot)=>{
 
       // await bot.sendPhoto(chatId, image_url)
 
-      bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+      bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
     } catch (error) {
-      console.error('Error:', error);
-      bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.');
+      console.error('Error:', error)
+      bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
     }
-  });
-
+  })
 }

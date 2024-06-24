@@ -12,7 +12,8 @@
     "build": "rimraf ./build && npx tsc",
     "lint": "npx eslint ./src",
     "lint-format": "npx eslint ./src --fix",
-    "vercel-build": "echo hello"
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -54,6 +55,7 @@
     "@typescript-eslint/parser": "^5.48.0",
     "eslint": "^8.31.0",
     "nodemon": "^2.0.20",
+    "prettier": "^3.3.2",
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.11.0"

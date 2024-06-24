@@ -1,7 +1,7 @@
 import { Response } from 'express'
 import { ValidationError } from 'joi'
-import { APIError, HttpStatusCode } from '../errors';
-import { getLogger } from '../logging';
+import { APIError, HttpStatusCode } from '../errors'
+import { getLogger } from '../logging'
 
 export const CREATED = 'CREATED'
 export const UPDATED = 'UPDATED'
@@ -18,13 +18,13 @@ export async function errorHandlerMiddleware(err: any, res: Response) {
   }
 
   if (err instanceof APIError) {
-    statusCode = err.httpCode;
-    message = err.message;
+    statusCode = err.httpCode
+    message = err.message
   }
 
-  const logger = getLogger();
+  const logger = getLogger()
 
-  logger.error(err);
+  logger.error(err)
 
-  res.status(statusCode).json({ message });
+  res.status(statusCode).json({ message })
 }
