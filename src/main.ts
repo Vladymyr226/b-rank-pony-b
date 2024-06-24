@@ -4,21 +4,18 @@ import cors from 'cors'
 import { Router } from 'express'
 import { errorHandlerMiddleware } from './common/middleware/error.middleware'
 import './common/dotenv.config'
-import TelegramBot from 'node-telegram-bot-api'
 import OpenAIApi from 'openai'
 import { configureHealthCheckRouter } from './modules/common/routes/healthcheck.routes'
 import { getLogger } from './common/logging'
-import { botController } from './modules/bot/bot.controller'
+import getBotInstance from './modules/common/bot'
+import { botCommands } from './modules/bot/bot.commands'
 
 const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_KEY,
 })
 
-const bot = new TelegramBot(process.env.TG_BOT_TOKEN, {
-  polling: true,
-})
-
-botController(bot)
+getBotInstance()
+botCommands()
 
 const { PORT } = process.env
 
