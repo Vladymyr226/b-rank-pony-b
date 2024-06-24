@@ -11,6 +11,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import Calendar from 'telegram-inline-calendar';
 import OpenAIApi from 'openai';
 import { configureHealthCheckRouter } from "./modules/common/routes/healthcheck.routes";
+import { getLogger } from "./middleware/logging";
 
 const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_KEY,
@@ -162,8 +163,11 @@ bot.on('photo', async (msg) => {
   }
 });
 
-
+const { PORT } = process.env;
 const app = express()
+const log = getLogger();
+log.info('Starting application');
+
 
 app.use(express.json())
 
@@ -185,10 +189,21 @@ app.use('/api', addApiRoutes())
 
 configureHealthCheckRouter(app);
 
-// app.use(errorHandlerMiddleware)
+app.use(errorHandlerMiddleware)
+
+let port = parseInt(PORT, 10);
+
+if (!port) {
+  log.warn({}, 'Port is not defined, using default');
+  port = 5000;
+}
 
 app.listen(process.env.PORT, () => {
-  console.log(`Server listening at http://localhost:${process.env.PORT}`)
-})
+  log.info(
+    {
+      port: PORT,
+    },
+    'listening...',
+  );})
 
 export default app
