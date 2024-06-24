@@ -9,6 +9,7 @@ import { configureHealthCheckRouter } from './modules/common/routes/healthcheck.
 import { getLogger } from './common/logging'
 import getBotInstance from './modules/common/bot'
 import { botCommands } from './modules/bot/bot.commands'
+import { runMigrations } from './common/db/migrations'
 
 const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_KEY,
@@ -17,7 +18,7 @@ const openai = new OpenAIApi({
 getBotInstance()
 botCommands()
 
-const { PORT } = process.env
+const { PORT, AUTO_MIGRATION } = process.env
 
 const app = express()
 const log = getLogger()
@@ -28,13 +29,18 @@ app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-function addApiRoutes() {
+async function addApiRoutes() {
+  if (+AUTO_MIGRATION) await runMigrations()
+
   const router = Router({ mergeParams: true })
 
   return router
 }
 
-app.use('/api', addApiRoutes())
+;(async () => {
+  const apiRouter = await addApiRoutes()
+  app.use('/api', apiRouter)
+})()
 
 configureHealthCheckRouter(app)
 
