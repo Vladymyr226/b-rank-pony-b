@@ -10,6 +10,7 @@ import { createCabinetRouter } from './modules/routes/routes'
 import TelegramBot from 'node-telegram-bot-api';
 import Calendar from 'telegram-inline-calendar';
 import OpenAIApi from 'openai';
+import { configureHealthCheckRouter } from "./modules/common/routes/healthcheck.routes";
 
 const openai = new OpenAIApi({
   apiKey: process.env.OPENAI_KEY,
@@ -182,9 +183,7 @@ function addApiRoutes() {
 
 app.use('/api', addApiRoutes())
 
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).json('Health check works!')
-})
+configureHealthCheckRouter(app);
 
 // app.use(errorHandlerMiddleware)
 
