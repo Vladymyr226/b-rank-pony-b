@@ -1,9 +1,9 @@
-import { usersRepository } from './users.repository';
-import { IUserDB } from './users.types';
-import { generateToken } from '../../common/utils/token.utils';
-import { getLogger } from '../../../common/logging';
+import { usersRepository } from './users.repository.js';
+import { IUserDB } from './users.types.js';
+import { generateToken } from '../../common/utils/token.utils.js';
+import { getLogger } from '../../../common/logging.js';
 
-const createUser = async (data: never) => {
+const createUser = async (data: any) => {
   const { email } = data;
   const log = getLogger();
 
@@ -23,7 +23,7 @@ const createUser = async (data: never) => {
   return { status: 200, token, name: newUser[0].user_name, email: newUser[0].email };
 };
 
-const loginUser = async (data: never) => {
+const loginUser = async (data: any) => {
   const { user_name, email } = data;
 
   const user: Array<IUserDB> = await usersRepository.getUserByEmailName(email, user_name);

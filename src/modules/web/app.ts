@@ -1,11 +1,11 @@
 import express, { Request, Response, Router } from 'express';
 import JSON from 'body-parser';
 import cors from 'cors';
-import { configureHealthCheckRouter } from '../common/routes/healthcheck.routes';
-import { createCommentsRouter } from './comments/comments.routes';
-import { createUsersRouter } from './users/users.routes';
-import { createRequestLogger } from '../../common/middlewares/logger';
-import { errorHandlerMiddleware } from '../../common/middlewares/error.middleware';
+import { configureHealthCheckRouter } from '../common/routes/healthcheck.routes.js';
+import { createCommentsRouter } from './comments/comments.routes.js';
+import { createUsersRouter } from './users/users.routes.js';
+import { createRequestLogger } from '../../common/middlewares/logger.js';
+import { errorHandlerMiddleware } from '../../common/middlewares/error.middleware.js';
 const { json, urlencoded } = JSON;
 
 export function buildApp(): express.Application {

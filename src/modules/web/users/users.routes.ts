@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { UsersController } from './users.controller';
-import { validateSchema } from '../../../../../comments-api/src/common/middlewares/validate';
-import { userSchema } from './validation/user.schema';
+import { UsersController } from './users.controller.js';
+import { userSchema } from './validation/user.schema.js';
+import { validateSchema } from '../../../common/middlewares/validate.js';
 
 export const createUsersRouter = () => {
   const router = Router();

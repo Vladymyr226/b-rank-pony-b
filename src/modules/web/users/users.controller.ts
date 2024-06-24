@@ -1,6 +1,6 @@
-import { ExpressRequest, ExpressResponse } from '../../../../../comments-api/src/common/types';
-import { usersService } from './users.service';
+import { usersService } from './users.service.js';
 import fs from 'fs';
+import { ExpressRequest, ExpressResponse } from '../../../common/types.js';
 
 const createUser = async (req: ExpressRequest, res: ExpressResponse) => {
   const result = await usersService.createUser(req.query);

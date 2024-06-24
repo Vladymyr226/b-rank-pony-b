@@ -23,7 +23,7 @@ class BaseError extends Error {
  * @deprecated Use HttpError class
  * */
 export class APIError extends BaseError {
-  constructor(httpCode = HttpStatusCode.INTERNAL_SERVER, message: never) {
+  constructor(httpCode = HttpStatusCode.INTERNAL_SERVER, message: any) {
     super(httpCode, message);
   }
 }

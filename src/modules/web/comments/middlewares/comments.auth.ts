@@ -1,5 +1,5 @@
-import { verifyToken } from '../../../common/utils/token.utils';
-import { ExpressRequest, ExpressResponse, ExpressNextFunction } from '../../../../../../comments-api/src/common/types';
+import { ExpressNextFunction, ExpressRequest, ExpressResponse } from '../../../../common/types.js';
+import { verifyToken } from '../../../common/utils/token.utils.js';
 
 export const authMiddleware = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
   if (process.env.SKIP_AUTH) return next();

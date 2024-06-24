@@ -1,4 +1,4 @@
-import { ExpressRequest, ExpressResponse, ExpressNextFunction } from '../types';
+import { ExpressRequest, ExpressResponse, ExpressNextFunction } from '../types.js';
 import { Schema } from 'joi';
 
 export const validateSchema = (schema: Schema) => {

@@ -1,5 +1,5 @@
 import Logger, { createLogger } from 'bunyan';
-import pkgInfo from '../../../comments-api/package.json';
+import pkgInfo from '../../package.json';
 
 const { ENVIRONMENT, LOG_NAME_SERVICE = 'comments' } = process.env;
 
