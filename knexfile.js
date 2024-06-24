@@ -1,10 +1,10 @@
 require('dotenv').config()
 
-const { POSTGRES_URL } = process.env
+const { PG_CONNECTION_STRING } = process.env
 
 const config = {
   client: 'postgresql',
-  connection: POSTGRES_URL,
+  connection: PG_CONNECTION_STRING,
   pool: {
     min: 2,
     max: 10,

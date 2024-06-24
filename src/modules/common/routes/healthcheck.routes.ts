@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from 'express'
 
 import pkgInfo from '../../../../package.json'
+const { ENVIRONMENT } = process.env
 
 export function configureHealthCheckRouter(app: Application) {
   app.get(['/info', '/', '/healthz', '/healthcheck'], (req: Request, res: Response) => {
@@ -10,6 +11,7 @@ export function configureHealthCheckRouter(app: Application) {
       .send(
         JSON.stringify({
           status: 'ok',
+          environment: ENVIRONMENT,
           time: new Date().toUTCString(),
           version: pkgInfo.version,
         }),
