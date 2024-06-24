@@ -1,0 +1,121 @@
+import {TelegramBot} from 'node-telegram-bot-api';
+import { tgCalendar, options } from "./bot.config";
+
+
+export const botController = (bot:TelegramBot)=>{
+
+  bot.onText(/\/start/, (msg) => {
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+  });
+  bot.onText('Чина', (msg) => {
+    bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а');
+  });
+
+  bot.on('callback_query', (query) => {
+    const chatId = query.message.chat.id;
+    const data = query.data;
+
+    if (data === '1') {
+      bot.sendMessage(
+        chatId,
+        `
+1. "Блискучий Блиск" - манікюр + покриття гель-лаком - *350 грн*
+
+2. "Дивовижний Вигляд" - професійний макіяж на вечірку - *500 грн*
+
+3. "Відновлення Волосся" - процедура глибокого зволоження волосся - *600 грн*
+
+4. "Релаксаційна Розкіш" - масаж обличчя та шиї - *400 грн*
+
+5. "Розкішні Ресниці" - нарощування вій (класичне) - *700 грн*
+
+6. "Чарівна Зміна" - стрижка + укладка - *800 грн*
+`,
+        {
+          parse_mode: 'Markdown',
+        },
+      );
+    }
+
+    if (data === '2') {
+      bot.sendMessage(chatId, 'Надішліть ваш контакт, натиснувши кнопку "Поділитися моїм контактом"', {
+        reply_markup: {
+          keyboard: [[{ text: 'Поділитися моїм контактом', request_contact: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      });
+    }
+
+    if (data === '3') {
+      tgCalendar(bot).startNavCalendar(query.message);
+    }
+
+    if (query.message.message_id == tgCalendar(bot).chats.get(query.message.chat.id)) {
+      // res = calendar.clickButtonCalendar(query);
+
+      // if (res !== -1) {
+      //   bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + res);
+      // }
+    }
+
+    if (data === '4') {
+      bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.');
+    }
+  });
+
+// bot.on('callback_query', (query) => {})
+
+  bot.on('polling_error', (error) => {
+    console.log(error);
+  });
+
+  bot.on('contact', (msg) => {
+    const chatId = msg.chat.id;
+    bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`);
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+  });
+
+  bot.on('photo', async (msg) => {
+    const chatId = msg.chat.id;
+    const photoId = msg.photo[0].file_id;
+
+    const photoInfo = await bot.getFile(photoId);
+    const photoUrl = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${photoInfo.file_path}`;
+
+    const prompt = 'show more haircut options for this person';
+
+    // model: 'dall-e-2',
+    // image: fs.createReadStream(photoUrl),
+    // prompt,
+    // n: 1,
+    // size: '1024x1024',
+
+    try {
+      // const response = await openai.createImageEdit(
+      //   fs.createReadStream('./img/Volodya.jpeg'),
+      //   fs.createReadStream('./img/Volodya.jpeg'),
+      //   // prompt,
+      //   'show more haircut options for this person',
+      //
+      //   // fs.createReadStream(photoUrl),
+      //
+      //   // fs.createReadStream('mask.png'),
+      //
+      //   1,
+      //   '1024x1024',
+      // );
+      // image_url = response.data[0].url;
+
+      // console.log(image_url);
+
+      // await bot.sendPhoto(chatId, image_url)
+
+      bot.sendMessage(msg.chat.id, 'Оберіть дію:', options);
+    } catch (error) {
+      console.error('Error:', error);
+      bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.');
+    }
+  });
+
+}
