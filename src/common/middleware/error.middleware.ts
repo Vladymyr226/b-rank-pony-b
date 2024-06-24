@@ -1,7 +1,7 @@
 import { Response } from 'express'
 import { ValidationError } from 'joi'
-import { APIError, HttpStatusCode } from './errors';
-import { getLogger } from './logging';
+import { APIError, HttpStatusCode } from '../errors';
+import { getLogger } from '../logging';
 
 export const CREATED = 'CREATED'
 export const UPDATED = 'UPDATED'

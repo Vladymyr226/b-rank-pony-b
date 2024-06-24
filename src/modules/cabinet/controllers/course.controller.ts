@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import db from '../../../db/knexKonfig'
-import { CREATED, DELETED, UPDATED } from '../../../middleware/error.middleware'
+import db from '../../../common/db/knexKonfig'
+import { CREATED, DELETED, UPDATED } from '../../../common/middleware/error.middleware'
 
 export async function createCourse(req, res: Response) {
   const json = req.body

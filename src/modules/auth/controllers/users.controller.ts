@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import { Request, Response } from 'express'
-import db from '../../../db/knexKonfig'
+import db from '../../../common/db/knexKonfig'
 import { generateToken } from '../../../utils/token.utils'
 
 export async function registration(req: Request, res: Response) {

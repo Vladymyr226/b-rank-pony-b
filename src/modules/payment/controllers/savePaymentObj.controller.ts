@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import db from '../../../db/knexKonfig'
+import db from '../../../common/db/knexKonfig'
 
 const savePaymentObj = async (req: Request, res: Response) => {
   const { merchant_data, order_status } = req.body

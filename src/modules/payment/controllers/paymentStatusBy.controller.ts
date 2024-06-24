@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import db from '../../../db/knexKonfig'
+import db from '../../../common/db/knexKonfig'
 
 const paymentStatusBy = async (req: Request, res: Response) => {
   const { id } = req.query
