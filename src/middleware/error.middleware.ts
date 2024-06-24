@@ -1,17 +1,7 @@
 import { Response } from 'express'
 import { ValidationError } from 'joi'
-
-export enum HttpStatusCode {
-  OK = 200,
-  BAD_REQUEST = 400,
-  UNAUTHORIZED = 401,
-  NOT_FOUND = 404,
-  INTERNAL_SERVER = 500,
-}
-
-export const CREATED = 'CREATED'
-export const UPDATED = 'UPDATED'
-export const DELETED = 'DELETED'
+import { APIError, HttpStatusCode } from './errors';
+import { getLogger } from './logging';
 
 export async function errorHandlerMiddleware(err: any, res: Response) {
   let statusCode = err.status || 500
@@ -23,12 +13,14 @@ export async function errorHandlerMiddleware(err: any, res: Response) {
     message = err.details[0].message
   }
 
-  const errorDetails = {
-    error: err.message,
-    stack: err.stack,
+  if (err instanceof APIError) {
+    statusCode = err.httpCode;
+    message = err.message;
   }
 
-  console.error('Error in errorHandlerMiddleware:', errorDetails)
+  const logger = getLogger();
 
-  res.status(statusCode).json({ message })
+  logger.error(err);
+
+  res.status(statusCode).json({ message });
 }
