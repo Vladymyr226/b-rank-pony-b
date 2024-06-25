@@ -1,11 +1,24 @@
 import { tgCalendar, options } from './bot.config'
 import getBotInstance from '../common/bot'
 import { getLogger } from '../../common/logging'
+import { botRepository } from './bot.repository'
 
 const log = getLogger()
 const bot = getBotInstance()
 
-const startCommandBot = (msg) => {
+const startCommandBot = async (msg) => {
+  const { id, username, first_name, last_name } = msg.from
+  const isUserByTgID = await botRepository.getUserByTgID(msg.from.id)
+
+  if (!isUserByTgID.length) {
+    await botRepository.insertUser({
+      user_tg_id: id,
+      username,
+      first_name,
+      last_name,
+    })
+    bot.sendMessage(msg.chat.id, 'Вітаю ' + first_name + ' ' + last_name)
+  }
   bot.sendMessage(msg.chat.id, 'Оберіть дію:', options)
 }
 
