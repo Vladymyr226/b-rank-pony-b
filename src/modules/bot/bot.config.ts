@@ -1,5 +1,5 @@
 import Calendar from 'telegram-inline-calendar'
-import { TelegramBot } from 'node-telegram-bot-api'
+import TelegramBot from 'node-telegram-bot-api'
 
 export const tgCalendar = (bot: TelegramBot) => {
   return new Calendar(bot, {
@@ -13,7 +13,7 @@ export const tgCalendar = (bot: TelegramBot) => {
   })
 }
 
-export const options = {
+export const optionsOfCustomer = {
   reply_markup: {
     inline_keyboard: [
       [{ text: 'Дізнатися інформацію про послуги закладу', callback_data: '1' }],
@@ -26,6 +26,14 @@ export const options = {
         },
       ],
     ],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  },
+}
+
+export const optionsOfAdmin = {
+  reply_markup: {
+    inline_keyboard: [[{ text: "I'm an Admin", callback_data: '5' }]],
     resize_keyboard: true,
     one_time_keyboard: true,
   },

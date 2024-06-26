@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api'
 
-let botInstance = null
+let botInstance: TelegramBot = null
 
 const getBotInstance = () => {
   if (!botInstance) {

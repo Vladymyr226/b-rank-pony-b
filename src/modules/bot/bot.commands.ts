@@ -6,9 +6,11 @@ export const botCommands = () => {
 
   bot.onText(/\/start/, BotController.startCommandBot)
 
-  bot.onText('Чина', (msg) => {
+  bot.onText(/Чина/, (msg) => {
     bot.sendMessage(msg.chat.id, 'Саундтрек, санчізес, сюда-а')
   })
+
+  bot.onText(/\/sign up \d+/, BotController.adminSignUp)
 
   bot.on('callback_query', BotController.callbackQueryBot)
 
