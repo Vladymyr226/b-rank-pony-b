@@ -11,7 +11,7 @@ const startCommandBot = async (msg: Message) => {
   const { id, username, first_name, last_name } = msg.from
   const chatId = msg.chat.id
 
-  const isAdminByTgID = await botRepository.getAdminByTgID(id)
+  const isAdminByTgID = await botRepository.getAdminByTgIDEnable(id)
 
   if (isAdminByTgID.length) {
     await bot.sendMessage(chatId, 'Вітаю, ' + first_name + ' ' + last_name)

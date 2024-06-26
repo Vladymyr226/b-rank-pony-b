@@ -6,6 +6,10 @@ const getCustomerByTgID = async (user_tg_id: number): Promise<Array<TCustomer>> 
 }
 
 const getAdminByTgID = async (user_tg_id: number): Promise<Array<TCustomer>> => {
+  return db.select('*').from('admins').where({ user_tg_id }).returning('*')
+}
+
+const getAdminByTgIDEnable = async (user_tg_id: number): Promise<Array<TCustomer>> => {
   return db.select('*').from('admins').where({ user_tg_id, enable: true }).returning('*')
 }
 
@@ -24,6 +28,7 @@ const getSalonByID = async (id: number): Promise<Array<TSalon>> => {
 export const botRepository = {
   getCustomerByTgID,
   getAdminByTgID,
+  getAdminByTgIDEnable,
   insertCustomer,
   getSalonByID,
   insertAdmin,
