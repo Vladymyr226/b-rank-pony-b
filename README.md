@@ -17,7 +17,7 @@ $ npm install
 ## 4.Running migrations
 
 ```bash
-$ knex migrate:latest
+$ npm run migrate:run
 ```
 
 ## 5.Running the app
