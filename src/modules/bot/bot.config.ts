@@ -33,7 +33,12 @@ export const optionsOfCustomer = {
 
 export const optionsOfAdmin = {
   reply_markup: {
-    inline_keyboard: [[{ text: "I'm an Admin", callback_data: '5' }]],
+    inline_keyboard: [
+      [{ text: "I'm an Admin", callback_data: '5' }],
+      [{ text: 'Додати нову послугу', callback_data: '6' }],
+      [{ text: 'Додати нового співробітника', callback_data: '7' }],
+      [{ text: 'Показати всіх співробітників', callback_data: '8' }],
+    ],
     resize_keyboard: true,
     one_time_keyboard: true,
   },
