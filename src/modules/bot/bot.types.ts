@@ -30,7 +30,8 @@ export type TSalon = {
   description: string
   address: string
   website: string
-  opening_hours: Record<string, number>
+  work_hour_from?: string
+  work_hour_to?: string
   district_id?: number
   created_at?: Date
   updated_at?: Date
@@ -74,3 +75,8 @@ export type TEmployeesServices = {
 }
 
 export type TEmployeeWithServiceName = TEmployee & { services: Array<Pick<TService, 'name'>['name']> }
+
+export type TAdditionalType = {
+  step: string
+  service_id?: number
+}
