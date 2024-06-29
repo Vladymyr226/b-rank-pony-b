@@ -2,6 +2,7 @@ import { db } from '../../common/db/knexKonfig'
 import {
   TAdmin,
   TCustomer,
+  TDistrict,
   TEmployee,
   TEmployeesServices,
   TEmployeeWithServiceName,
@@ -21,16 +22,57 @@ const getAdminByTgIDEnable = async (user_tg_id: number): Promise<Array<TAdmin>> 
   return db.select('*').from('admins').where({ user_tg_id, enable: true }).returning('*')
 }
 
-const getSalonByID = async (id: number): Promise<Array<TSalon>> => {
-  return db.select('*').from('salon').where({ id }).returning('*')
+const getSalonByID = async ({ id, district_id }: { id?: number; district_id?: number }): Promise<Array<TSalon>> => {
+  return db
+    .select('*')
+    .from('salon')
+    .modify((q) => {
+      if (id) q.where({ id })
+      if (district_id) q.where({ district_id })
+    })
+    .returning('*')
 }
 
-const getServiceBySalonID = async (salon_id: number): Promise<Array<TService>> => {
-  return db.select('*').from('services').where({ salon_id }).returning('*')
+const getServiceByID = async ({ id, salon_id }: { id?: number; salon_id?: number }): Promise<Array<TService>> => {
+  return db
+    .select('*')
+    .from('services')
+    .modify((q) => {
+      if (id) q.where({ id })
+      if (salon_id) q.where({ salon_id })
+    })
+    .returning('*')
+}
+
+const getDistricts = async (): Promise<Array<TDistrict>> => {
+  return db.select('*').from('districts').returning('*')
+}
+
+const getEmployeesByID = async ({ id, salon_id }: { id?: number; salon_id?: number }): Promise<Array<TEmployee>> => {
+  return db
+    .select('*')
+    .from('employees')
+    .modify((q) => {
+      if (id) q.where({ id })
+      if (salon_id) q.where({ salon_id })
+    })
+    .returning('*')
+}
+
+const getServicesByEmployeeID = async (employee_id: number): Promise<Array<TService>> => {
+  return db('employees_services as es')
+    .select('*')
+    .innerJoin('services as s', 'es.service_id', 's.id')
+    .where('es.employee_id', employee_id)
+    .returning('*')
 }
 
 const insertCustomer = async (data: TCustomer): Promise<Array<TCustomer>> => {
   return db('customers').insert(data).returning('*')
+}
+
+const putCustomer = async (user_tg_id: number, data: Partial<TCustomer>): Promise<Array<TCustomer>> => {
+  return db('customers').update(data).where({ user_tg_id }).returning('*')
 }
 
 const insertAdmin = async (data: TAdmin): Promise<Array<TAdmin>> => {
@@ -75,11 +117,15 @@ export const botRepository = {
   getAdminByTgID,
   getAdminByTgIDEnable,
   getEmployeeWithServices,
-  insertCustomer,
+  getDistricts,
+  getEmployeesByID,
   getSalonByID,
-  getServiceBySalonID,
+  getServiceByID,
+  getServicesByEmployeeID,
+  insertCustomer,
   insertAdmin,
   insertEmployee,
   insertService,
   insertEmployeesServices,
+  putCustomer,
 }

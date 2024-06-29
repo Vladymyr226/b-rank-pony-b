@@ -3,11 +3,12 @@ import { tgCalendar, optionsOfCustomer, optionsOfAdmin } from './bot.config'
 import getBotInstance from '../common/bot'
 import { getLogger } from '../../common/logging'
 import { botRepository } from './bot.repository'
-import { TEmployee, TEmployeeWithServiceName, TService } from './bot.types'
+import { TAdditionalType, TEmployee, TService } from './bot.types'
+import { botService } from './bot.service'
 
 const log = getLogger()
 const bot = getBotInstance()
-const userStates: Record<number, TEmployee & Partial<TService> & { step: string; service_id?: number }> = {}
+const userStates: Record<number, TEmployee & Partial<TService> & TAdditionalType> = {}
 
 const startCommandBot = async (msg: Message) => {
   const { id, username, first_name, last_name } = msg.from
@@ -56,7 +57,7 @@ const adminSignUp = async (msg: Message, match: RegExpExecArray | null) => {
 
   const salon_id = +match[0].split(' ')[2]
 
-  const isHasSalon = await botRepository.getSalonByID(salon_id)
+  const isHasSalon = await botRepository.getSalonByID({ id: salon_id })
 
   if (!isHasSalon.length) {
     log.error('Salon by ID: ' + salon_id + ' is disappeared')
@@ -165,25 +166,14 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   const data = query.data
 
   if (data === '1') {
-    return bot.sendMessage(
-      chatId,
-      `
-1. "Блискучий Блиск" - манікюр + покриття гель-лаком - *350 грн*
+    const customer = await botRepository.getCustomerByTgID(id)
+    const services = await botRepository.getServiceByID({ salon_id: customer[0].salon_id })
+    const salon = await botRepository.getSalonByID({ id: customer[0].salon_id })
 
-2. "Дивовижний Вигляд" - професійний макіяж на вечірку - *500 грн*
-
-3. "Відновлення Волосся" - процедура глибокого зволоження волосся - *600 грн*
-
-4. "Релаксаційна Розкіш" - масаж обличчя та шиї - *400 грн*
-
-5. "Розкішні Ресниці" - нарощування вій (класичне) - *700 грн*
-
-6. "Чарівна Зміна" - стрижка + укладка - *800 грн*
-`,
-      {
-        parse_mode: 'Markdown',
-      },
-    )
+    const messages = services.map(botService.formatServiceInfo).join('\n\n')
+    await bot.sendMessage(chatId, 'Послуги закладу ' + salon[0].name)
+    await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer)
   }
 
   if (data === '2') {
@@ -197,13 +187,35 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '3') {
-    return tgCalendar(bot).startNavCalendar(query.message)
-  }
+    const customer = await botRepository.getCustomerByTgID(id)
+    if (customer[0].salon_id) {
+      const employees = await botRepository.getEmployeesByID({ salon_id: customer[0].salon_id })
 
-  const calendarTimeResponse = tgCalendar(bot).clickButtonCalendar(query)
+      await bot.sendMessage(chatId, 'Виберіть майстра:', {
+        reply_markup: {
+          inline_keyboard: employees.map((item) => [{ text: item.first_name, callback_data: `employee_${item.id}` }]),
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      })
+      return bot.sendMessage(chatId, 'Вибрати інший заклад', {
+        reply_markup: {
+          inline_keyboard: [[{ text: 'Вибрати інший заклад', callback_data: `change_salon` }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      })
+    }
 
-  if (calendarTimeResponse !== -1) {
-    return bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+    const districts = await botRepository.getDistricts()
+
+    return bot.sendMessage(chatId, 'Виберіть район:', {
+      reply_markup: {
+        inline_keyboard: districts.map((item) => [{ text: item.name, callback_data: `district_${item.id}` }]),
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    })
   }
 
   if (data === '4') {
@@ -211,7 +223,12 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '5') {
-    return bot.sendMessage(chatId, 'Чиназес 🎉')
+    const admin = await botRepository.getAdminByTgID(id)
+    const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
+
+    const messages = services.map(botService.formatServiceInfo).join('\n\n')
+    await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
   }
 
   if (data === '6') {
@@ -223,11 +240,87 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data === '7') {
     const admin = await botRepository.getAdminByTgID(id)
-    const services = await botRepository.getServiceBySalonID(admin[0].salon_id)
+    const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
 
     return bot.sendMessage(chatId, 'Виберіть позицію:', {
       reply_markup: {
-        inline_keyboard: services.map((item) => [{ text: item.name, callback_data: `service_${item.id}` }]),
+        inline_keyboard: services.map((item) => [{ text: item.name, callback_data: `new-service_${item.id}` }]),
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    })
+  }
+
+  if (data.startsWith('new-service_')) {
+    const service_id = +data.split('_')[1]
+    const admin = await botRepository.getAdminByTgID(id)
+
+    userStates[chatId] = { step: 'first_name', salon_id: admin[0].salon_id, service_id }
+    return await bot.sendMessage(chatId, "Введіть ім'я")
+  }
+
+  if (data.startsWith('district_')) {
+    const district_id = +data.split('_')[1]
+    const salons = await botRepository.getSalonByID({ district_id })
+
+    return bot.sendMessage(
+      chatId,
+      salons.length ? 'Виберіть заклад:' : 'Нажаль, поки відсутні заклади в цьому районі',
+      {
+        reply_markup: {
+          inline_keyboard: salons.map((item) => [{ text: item.name, callback_data: `salon_${item.id}` }]),
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      },
+    )
+  }
+
+  if (data.startsWith('salon_')) {
+    const salon_id = +data.split('_')[1]
+    const customer = await botRepository.getCustomerByTgID(id)
+    if (!customer[0].salon_id) await botRepository.putCustomer(id, { salon_id })
+
+    const employees = await botRepository.getEmployeesByID({ salon_id })
+
+    await bot.sendMessage(chatId, 'Виберіть майстра:', {
+      reply_markup: {
+        inline_keyboard: employees.map((item) => [{ text: item.first_name, callback_data: `employee_${item.id}` }]),
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    })
+    return bot.sendMessage(chatId, 'Вибрати інший заклад', {
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Вибрати інший заклад', callback_data: `change_salon` }]],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    })
+  }
+
+  if (data === 'change_salon') {
+    await botRepository.putCustomer(id, { salon_id: null })
+    const districts = await botRepository.getDistricts()
+
+    return bot.sendMessage(chatId, 'Виберіть район:', {
+      reply_markup: {
+        inline_keyboard: districts.map((item) => [{ text: item.name, callback_data: `district_${item.id}` }]),
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    })
+  }
+
+  if (data.startsWith('employee_')) {
+    const employee_id = +data.split('_')[1]
+    const service = await botRepository.getServicesByEmployeeID(employee_id)
+
+    return bot.sendMessage(chatId, 'Виберіть послугу:', {
+      reply_markup: {
+        inline_keyboard: service.map((item) => [
+          { text: item.name, callback_data: `service_${item.id}_${employee_id}` },
+        ]),
         resize_keyboard: true,
         one_time_keyboard: true,
       },
@@ -236,24 +329,42 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data.startsWith('service_')) {
     const service_id = +data.split('_')[1]
-    const admin = await botRepository.getAdminByTgID(id)
+    const employee_id = +data.split('_')[2]
 
-    userStates[chatId] = { step: 'first_name', salon_id: admin[0].salon_id, service_id }
-    return await bot.sendMessage(chatId, 'Введите имя')
+    const services = await botRepository.getServiceByID({ id: service_id })
+    const employees = await botRepository.getEmployeesByID({ id: employee_id })
+
+    userStates[chatId] = {
+      ...userStates[chatId],
+      work_hour_from: employees[0].work_hour_from,
+      work_hour_to: employees[0].work_hour_to,
+      duration: services[0].duration,
+    }
+
+    return tgCalendar(
+      bot,
+      employees[0].work_hour_from,
+      employees[0].work_hour_to,
+      services[0].duration,
+    ).startNavCalendar(query.message)
+  }
+
+  const { work_hour_from, work_hour_to, duration } = userStates[chatId] || {}
+
+  if (work_hour_from && work_hour_to && duration) {
+    const calendarTimeResponse = tgCalendar(bot, work_hour_from, work_hour_to, duration).clickButtonCalendar(query)
+
+    if (calendarTimeResponse !== -1) {
+      delete userStates[chatId]
+      return bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+    }
   }
 
   if (data === '8') {
-    const formatEmployeeInfo = (employee: TEmployeeWithServiceName) => {
-      return `*Имя:* ${employee.first_name}
-*Телефон:* ${employee.phone}
-*Рабочие часы:* ${employee.work_hour_from} - ${employee.work_hour_to}
-*Услуги:* ${employee.services.join(', ')}`
-    }
-
     try {
       const services = await botRepository.getEmployeeWithServices()
 
-      const messages = services.map(formatEmployeeInfo).join('\n\n')
+      const messages = services.map(botService.formatEmployeeInfo).join('\n\n')
       await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
       return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
     } catch (err) {
