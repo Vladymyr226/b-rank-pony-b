@@ -3,12 +3,14 @@ import { tgCalendar, optionsOfCustomer, optionsOfAdmin } from './bot.config'
 import getBotInstance from '../common/bot'
 import { getLogger } from '../../common/logging'
 import { botRepository } from './bot.repository'
-import { TAdditionalType, TEmployee, TService } from './bot.types'
+import { TAdditionalType, TDeal, TEmployee, TService } from './bot.types'
 import { botService } from './bot.service'
+import moment from 'moment-timezone'
 
 const log = getLogger()
 const bot = getBotInstance()
-const userStates: Record<number, TEmployee & Partial<TService> & TAdditionalType> = {}
+const userStates: Record<number, TEmployee & Partial<TService & TDeal> & TAdditionalType> = {}
+let calendar = null
 
 const startCommandBot = async (msg: Message) => {
   const { id, username, first_name, last_name } = msg.from
@@ -25,7 +27,7 @@ const startCommandBot = async (msg: Message) => {
 
   if (isCustomerByTgID.length) {
     await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name)
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer)
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(isCustomerByTgID[0].salon_id))
   }
 
   const customer = await botRepository.insertCustomer({
@@ -40,7 +42,7 @@ const startCommandBot = async (msg: Message) => {
   }
 
   await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name + '🎉')
-  return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer)
+  return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
 }
 
 const adminSignUp = async (msg: Message, match: RegExpExecArray | null) => {
@@ -101,11 +103,6 @@ const messageBot = async (msg: Message, metaData: Metadata) => {
         userState.step = 'price'
         await bot.sendMessage(chatId, 'Введіть ціну послуги (в грн)')
         break
-      case 'price':
-        userState.price = +text
-        userState.step = 'duration'
-        await bot.sendMessage(chatId, 'Введіть тривалість послуги (в хвилинах)')
-        break
       case 'first_name':
         userState.first_name = text
         userState.step = 'phone'
@@ -121,8 +118,13 @@ const messageBot = async (msg: Message, metaData: Metadata) => {
         userState.step = 'work_hour_to'
         await bot.sendMessage(chatId, 'Працює до (формат ЧЧ:ХХ)')
         break
-      case 'duration':
-        userState.duration = +text
+      case 'work_hour_to':
+        userState.work_hour_to = text
+        userState.step = 'duration'
+        await bot.sendMessage(chatId, 'Введіть тривалість послуги (в хвилинах)')
+        break
+      case 'price':
+        userState.price = +text
         delete userState.step
 
         try {
@@ -132,11 +134,39 @@ const messageBot = async (msg: Message, metaData: Metadata) => {
           return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
         } catch (e) {
           log.error(e)
+          delete userStates[chatId]
           await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
           return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
         }
-      case 'work_hour_to':
-        userState.work_hour_to = text
+      case 'comment':
+        const {
+          salon_id,
+          service_id: serviceId,
+          employee_id,
+          customer_id,
+          calendar_time,
+          calendarTimeResponse,
+        } = userStates[chatId] || {}
+        try {
+          await botRepository.insertDeal({
+            salon_id,
+            service_id: serviceId,
+            employee_id,
+            customer_id,
+            notes: text,
+            calendar_time,
+          })
+          await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+          return delete userStates[chatId]
+        } catch (error) {
+          log.error(error)
+          await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
+          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+          return delete userStates[chatId]
+        }
+      case 'duration':
+        userState.duration = +text
         const { service_id } = userState
         delete userState.service_id
         delete userState.step
@@ -149,13 +179,10 @@ const messageBot = async (msg: Message, metaData: Metadata) => {
           return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
         } catch (e) {
           log.error(e)
+          delete userStates[chatId]
           await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
           return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
         }
-
-      default:
-        await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-        return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
     }
   }
 }
@@ -173,7 +200,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
     await bot.sendMessage(chatId, 'Послуги закладу ' + salon[0].name)
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer)
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
   }
 
   if (data === '2') {
@@ -191,16 +218,16 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     if (customer[0].salon_id) {
       const employees = await botRepository.getEmployeesByID({ salon_id: customer[0].salon_id })
 
-      await bot.sendMessage(chatId, 'Виберіть майстра:', {
+      await bot.sendMessage(chatId, 'Оберіть фахівця:', {
         reply_markup: {
           inline_keyboard: employees.map((item) => [{ text: item.first_name, callback_data: `employee_${item.id}` }]),
           resize_keyboard: true,
           one_time_keyboard: true,
         },
       })
-      return bot.sendMessage(chatId, 'Вибрати інший заклад', {
+      return bot.sendMessage(chatId, 'Обрати інший заклад', {
         reply_markup: {
-          inline_keyboard: [[{ text: 'Вибрати інший заклад', callback_data: `change_salon` }]],
+          inline_keyboard: [[{ text: 'Обрати інший заклад', callback_data: `change_salon` }]],
           resize_keyboard: true,
           one_time_keyboard: true,
         },
@@ -209,7 +236,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
     const districts = await botRepository.getDistricts()
 
-    return bot.sendMessage(chatId, 'Виберіть район:', {
+    return bot.sendMessage(chatId, 'Оберіть район:', {
       reply_markup: {
         inline_keyboard: districts.map((item) => [{ text: item.name, callback_data: `district_${item.id}` }]),
         resize_keyboard: true,
@@ -242,7 +269,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const admin = await botRepository.getAdminByTgID(id)
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
 
-    return bot.sendMessage(chatId, 'Виберіть позицію:', {
+    return bot.sendMessage(chatId, 'Оберіть позицію:', {
       reply_markup: {
         inline_keyboard: services.map((item) => [{ text: item.name, callback_data: `new-service_${item.id}` }]),
         resize_keyboard: true,
@@ -263,17 +290,13 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const district_id = +data.split('_')[1]
     const salons = await botRepository.getSalonByID({ district_id })
 
-    return bot.sendMessage(
-      chatId,
-      salons.length ? 'Виберіть заклад:' : 'Нажаль, поки відсутні заклади в цьому районі',
-      {
-        reply_markup: {
-          inline_keyboard: salons.map((item) => [{ text: item.name, callback_data: `salon_${item.id}` }]),
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
+    return bot.sendMessage(chatId, salons.length ? 'Оберіть заклад:' : 'Нажаль, поки відсутні заклади в цьому районі', {
+      reply_markup: {
+        inline_keyboard: salons.map((item) => [{ text: item.name, callback_data: `salon_${item.id}` }]),
+        resize_keyboard: true,
+        one_time_keyboard: true,
       },
-    )
+    })
   }
 
   if (data.startsWith('salon_')) {
@@ -283,16 +306,16 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
     const employees = await botRepository.getEmployeesByID({ salon_id })
 
-    await bot.sendMessage(chatId, 'Виберіть майстра:', {
+    await bot.sendMessage(chatId, 'Оберіть фахівця:', {
       reply_markup: {
         inline_keyboard: employees.map((item) => [{ text: item.first_name, callback_data: `employee_${item.id}` }]),
         resize_keyboard: true,
         one_time_keyboard: true,
       },
     })
-    return bot.sendMessage(chatId, 'Вибрати інший заклад', {
+    return bot.sendMessage(chatId, 'Обрати інший заклад', {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Вибрати інший заклад', callback_data: `change_salon` }]],
+        inline_keyboard: [[{ text: 'Обрати інший заклад', callback_data: `change_salon` }]],
         resize_keyboard: true,
         one_time_keyboard: true,
       },
@@ -303,7 +326,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     await botRepository.putCustomer(id, { salon_id: null })
     const districts = await botRepository.getDistricts()
 
-    return bot.sendMessage(chatId, 'Виберіть район:', {
+    return bot.sendMessage(chatId, 'Оберіть район:', {
       reply_markup: {
         inline_keyboard: districts.map((item) => [{ text: item.name, callback_data: `district_${item.id}` }]),
         resize_keyboard: true,
@@ -316,7 +339,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const employee_id = +data.split('_')[1]
     const service = await botRepository.getServicesByEmployeeID(employee_id)
 
-    return bot.sendMessage(chatId, 'Виберіть послугу:', {
+    return bot.sendMessage(chatId, 'Оберіть послугу:', {
       reply_markup: {
         inline_keyboard: service.map((item) => [
           { text: item.name, callback_data: `service_${item.id}_${employee_id}` },
@@ -333,31 +356,86 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
     const services = await botRepository.getServiceByID({ id: service_id })
     const employees = await botRepository.getEmployeesByID({ id: employee_id })
+    const customer = await botRepository.getCustomerByTgID(id)
+    const deals = await botRepository.getDealByID({ employee_id })
+    const busyTimes = deals.map((app) =>
+      moment.tz(app.calendar_time, 'UTC').tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm'),
+    )
+
+    const { work_hour_from, work_hour_to, salon_id, duration } = employees[0]
 
     userStates[chatId] = {
       ...userStates[chatId],
-      work_hour_from: employees[0].work_hour_from,
-      work_hour_to: employees[0].work_hour_to,
-      duration: services[0].duration,
+      salon_id,
+      service_id,
+      employee_id,
+      customer_id: customer[0].id,
+      work_hour_from,
+      work_hour_to,
+      duration,
     }
 
-    return tgCalendar(
-      bot,
-      employees[0].work_hour_from,
-      employees[0].work_hour_to,
-      services[0].duration,
-    ).startNavCalendar(query.message)
+    calendar = tgCalendar(bot, work_hour_from, work_hour_to, duration, busyTimes)
+    return calendar.startNavCalendar(query.message)
   }
 
-  const { work_hour_from, work_hour_to, duration } = userStates[chatId] || {}
+  const { work_hour_from, work_hour_to, duration, salon_id, service_id, employee_id, customer_id } =
+    userStates[chatId] || {}
 
   if (work_hour_from && work_hour_to && duration) {
-    const calendarTimeResponse = tgCalendar(bot, work_hour_from, work_hour_to, duration).clickButtonCalendar(query)
+    const calendarTimeResponse = calendar.clickButtonCalendar(query)
 
     if (calendarTimeResponse !== -1) {
-      delete userStates[chatId]
-      return bot.sendMessage(query.message.chat.id, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+      const localTimeZone = moment.tz.guess()
+      const utcTime = moment.tz(calendarTimeResponse, 'DD-MM-YYYY HH:mm', localTimeZone).utc().format()
+      const formattedUtcTime = `${utcTime.slice(0, 16)}:00Z`
+
+      userStates[chatId] = {
+        ...userStates[chatId],
+        calendar_time: formattedUtcTime,
+        calendarTimeResponse,
+      }
+
+      return bot.sendMessage(chatId, 'Чи треба додати коментар?', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Так', callback_data: `comment_1` }],
+            [{ text: 'Ні', callback_data: `comment_2` }],
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      })
     }
+  }
+
+  if (data.startsWith('comment_')) {
+    const comment_id = +data.split('_')[1]
+
+    const { calendar_time, calendarTimeResponse } = userStates[chatId] || {}
+
+    if (comment_id === 2) {
+      try {
+        await botRepository.insertDeal({
+          salon_id,
+          service_id,
+          employee_id,
+          customer_id,
+          calendar_time,
+        })
+        await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+        await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+        return delete userStates[chatId]
+      } catch (error) {
+        log.error(error)
+        await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
+        await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+        return delete userStates[chatId]
+      }
+    }
+
+    userStates[chatId] = { ...userStates[chatId], step: 'comment' }
+    return await bot.sendMessage(chatId, 'Додайте комент:')
   }
 
   if (data === '8') {
@@ -366,6 +444,32 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
       const messages = services.map(botService.formatEmployeeInfo).join('\n\n')
       await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
+      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
+    } catch (err) {
+      log.error(err)
+    }
+  }
+
+  if (data === '9') {
+    try {
+      const customer = await botRepository.getCustomerByTgID(id)
+      const deals = await botRepository.getDealsWithSalon({ customer_id: customer[0].id })
+
+      const messages = deals.map(botService.formatDealsInfo).join('\n\n')
+      await bot.sendMessage(chatId, messages)
+      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
+    } catch (err) {
+      log.error(err)
+    }
+  }
+
+  if (data === '10') {
+    try {
+      const admin = await botRepository.getAdminByTgID(id)
+      const deals = await botRepository.getDealsWithSalon({ salon_id: admin[0].salon_id })
+
+      const messages = deals.map(botService.formatDealsInfo).join('\n\n')
+      await bot.sendMessage(chatId, messages)
       return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
     } catch (err) {
       log.error(err)
@@ -380,7 +484,7 @@ const pollingErrorBot = (error) => {
 const contactTelBot = (msg) => {
   const chatId = msg.chat.id
   bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
-  bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer)
+  bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
 }
 
 const photoChangeBot = async (msg) => {
@@ -418,7 +522,7 @@ const photoChangeBot = async (msg) => {
 
     // await bot.sendPhoto(chatId, image_url)
 
-    bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer)
+    bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
   } catch (error) {
     console.error('Error:', error)
     bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
