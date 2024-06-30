@@ -2,6 +2,7 @@ import { db } from '../../common/db/knexKonfig'
 import {
   TAdmin,
   TCustomer,
+  TDeal,
   TDistrict,
   TEmployee,
   TEmployeesServices,
@@ -9,6 +10,7 @@ import {
   TSalon,
   TService,
 } from './bot.types'
+import moment from 'moment-timezone'
 
 const getCustomerByTgID = async (user_tg_id: number): Promise<Array<TCustomer>> => {
   return db.select('*').from('customers').where({ user_tg_id }).returning('*')
@@ -67,6 +69,29 @@ const getServicesByEmployeeID = async (employee_id: number): Promise<Array<TServ
     .returning('*')
 }
 
+const getDealByID = async ({
+  id,
+  employee_id,
+  salon_id,
+  customer_id,
+}: {
+  id?: number
+  employee_id?: number
+  salon_id?: number
+  customer_id?: number
+}): Promise<Array<TDeal>> => {
+  return db
+    .select('*')
+    .from('deals')
+    .modify((q) => {
+      if (id) q.where({ id })
+      if (employee_id) q.where({ employee_id })
+      if (salon_id) q.where({ salon_id })
+      if (customer_id) q.where({ customer_id })
+    })
+    .returning('*')
+}
+
 const insertCustomer = async (data: TCustomer): Promise<Array<TCustomer>> => {
   return db('customers').insert(data).returning('*')
 }
@@ -91,6 +116,10 @@ const insertEmployeesServices = async (data: TEmployeesServices): Promise<Array<
   return db('employees_services').insert(data).returning('*')
 }
 
+const insertDeal = async (data: TDeal): Promise<Array<TDeal>> => {
+  return db('deals').insert(data).returning('*')
+}
+
 const getEmployeeWithServices = async (): Promise<Array<TEmployeeWithServiceName>> => {
   const employees = await db.select('*').from('employees')
 
@@ -112,6 +141,35 @@ const getEmployeeWithServices = async (): Promise<Array<TEmployeeWithServiceName
   return employeesWithServices
 }
 
+const getDealsWithSalon = async ({
+  customer_id,
+  salon_id,
+}: {
+  customer_id?: number
+  salon_id?: number
+}): Promise<Array<any>> => {
+  const currentDateUTC = moment().utc().format('YYYY-MM-DD HH:mm:ss')
+
+  return db('deals')
+    .select(
+      'deals.calendar_time',
+      'deals.notes',
+      'salon.name as salon_name',
+      'services.name as service_name',
+      'employees.first_name as employee_name',
+    )
+    .join('salon', 'deals.salon_id', 'salon.id')
+    .join('services', 'deals.service_id', 'services.id')
+    .join('employees', 'deals.employee_id', 'employees.id')
+    .modify((q) => {
+      if (salon_id) q.where('deals.salon_id', salon_id)
+      if (customer_id) q.where('deals.customer_id', customer_id)
+    })
+    .andWhere('deals.calendar_time', '>', currentDateUTC)
+    .orderBy('deals.calendar_time', 'asc')
+    .returning('*')
+}
+
 export const botRepository = {
   getCustomerByTgID,
   getAdminByTgID,
@@ -122,10 +180,13 @@ export const botRepository = {
   getSalonByID,
   getServiceByID,
   getServicesByEmployeeID,
+  getDealByID,
+  getDealsWithSalon,
   insertCustomer,
   insertAdmin,
   insertEmployee,
   insertService,
   insertEmployeesServices,
+  insertDeal,
   putCustomer,
 }
