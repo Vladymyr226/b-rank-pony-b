@@ -382,8 +382,6 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   const { work_hour_from, work_hour_to, duration, salon_id, service_id, employee_id, customer_id } =
     userStates[chatId] || {}
 
-  console.log(11111111, userStates[chatId])
-
   if (work_hour_from && work_hour_to && duration) {
     const calendarTimeResponse = calendar.clickButtonCalendar(query)
 

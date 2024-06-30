@@ -18,10 +18,10 @@ export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration:
     close_calendar: true,
     lock_datetime: true,
     lock_date: true,
-    // start_date: now,
-    // stop_date: oneMonthLater,
+    start_date: now,
+    stop_date: oneMonthLater,
   })
-  // calendar.lock_datetime_array = busyTimes
+  calendar.lock_datetime_array = busyTimes
 
   return calendar
 }
