@@ -46,6 +46,7 @@
     "joi": "^17.7.0",
     "jsonwebtoken": "^9.0.0",
     "knex": "^2.4.0",
+    "moment": "^2.30.1",
     "moment-timezone": "^0.5.45",
     "node-telegram-bot-api": "^0.66.0",
     "openai": "^4.52.0",
