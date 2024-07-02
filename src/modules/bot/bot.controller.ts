@@ -359,7 +359,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const customer = await botRepository.getCustomerByTgID(id)
     const deals = await botRepository.getDealByID({ employee_id })
     const busyTimes = deals.map((app) =>
-      moment.tz(app.calendar_time, 'UTC').tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm'),
+      moment.tz(app.calendar_time, 'UTC').tz('Europe/Kiev').format('YYYY-MM-DD HH:mm'),
     )
 
     const { work_hour_from, work_hour_to, salon_id, duration } = employees[0]
