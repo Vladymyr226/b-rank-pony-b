@@ -386,8 +386,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const calendarTimeResponse = calendar.clickButtonCalendar(query)
 
     if (calendarTimeResponse !== -1) {
-      const localTimeZone = moment.tz.guess()
-      const utcTime = moment.tz(calendarTimeResponse, 'DD-MM-YYYY HH:mm', localTimeZone).utc().format()
+      const utcTime = moment.tz(calendarTimeResponse, 'DD-MM-YYYY HH:mm', 'Europe/Kiev').utc().format()
       const formattedUtcTime = `${utcTime.slice(0, 16)}:00Z`
 
       userStates[chatId] = {
