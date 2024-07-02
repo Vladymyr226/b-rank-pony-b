@@ -3,9 +3,9 @@ import TelegramBot from 'node-telegram-bot-api'
 import moment from 'moment-timezone'
 
 export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration: number, busyTimes: Array<string>) => {
-  const now = moment().startOf('day')
+  const now = moment().tz('Europe/Kiev').startOf('day')
   const oneMonthLater = moment().add(2, 'months')
-
+  console.log(222222222222, now)
   const calendar = new Calendar(bot, {
     date_format: 'DD-MM-YYYY HH:mm',
     language: 'en',
