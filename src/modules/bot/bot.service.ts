@@ -22,7 +22,7 @@ const formatDealsInfo = (data: {
   return `- Послуга: ${data.service_name}
 - Заклад: ${data.salon_name}
 - Фахівець: ${data.employee_name}
-- Час: ${moment.tz(data.calendar_time, 'UTC').tz(moment.tz.guess()).format('DD-MM-YYYY HH:mm')} ${data.notes ? `\n- Нотатки: ${data.notes}` : ''}`
+- Час: ${moment.tz(data.calendar_time, 'UTC').tz('Europe/Kiev').format('DD-MM-YYYY HH:mm')} ${data.notes ? `\n- Нотатки: ${data.notes}` : ''}`
 }
 
 export const botService = {
