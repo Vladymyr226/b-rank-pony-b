@@ -12,8 +12,15 @@ import {
 } from './bot.types'
 import moment from 'moment-timezone'
 
-const getCustomerByTgID = async (user_tg_id: number): Promise<Array<TCustomer>> => {
-  return db.select('*').from('customers').where({ user_tg_id }).returning('*')
+const getCustomerByID = async ({ id, user_tg_id }: { id?: number; user_tg_id?: number }): Promise<Array<TCustomer>> => {
+  return db
+    .select('*')
+    .from('customers')
+    .modify((q) => {
+      if (id) q.where({ id })
+      if (user_tg_id) q.where({ user_tg_id })
+    })
+    .returning('*')
 }
 
 const getAdminByID = async ({
@@ -188,8 +195,18 @@ const getDealsWithSalon = async ({
     .returning('*')
 }
 
+const getDealsRemember = async (): Promise<Array<TDeal>> => {
+  const utcTime = moment().tz('Europe/Kiev').utc().format('YYYY-MM-DD HH:mm:ss')
+
+  return db
+    .select('*')
+    .from('deals')
+    .whereRaw('EXTRACT(HOUR FROM age(?, calendar_time)) BETWEEN 1 AND 2', [utcTime])
+    .returning('*')
+}
+
 export const botRepository = {
-  getCustomerByTgID,
+  getCustomerByID,
   getAdminByID,
   getAdminByTgIDEnable,
   getEmployeeWithServices,
@@ -200,6 +217,7 @@ export const botRepository = {
   getServicesByEmployeeID,
   getDealByID,
   getDealsWithSalon,
+  getDealsRemember,
   insertCustomer,
   insertAdmin,
   insertEmployee,

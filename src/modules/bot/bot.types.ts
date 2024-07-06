@@ -3,6 +3,7 @@ export type TCustomer = {
   user_tg_id: number
   salon_id?: number
   username: string
+  chat_id?: number
   phone_number?: string
   first_name?: string
   last_name?: string

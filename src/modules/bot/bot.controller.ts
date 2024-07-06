@@ -6,9 +6,12 @@ import { botRepository } from './bot.repository'
 import { TAdditionalType, TDeal, TEmployee, TService } from './bot.types'
 import { botService } from './bot.service'
 import moment from 'moment-timezone'
+import getOpenAIInstance from '../common/ai'
 
 const log = getLogger()
 const bot = getBotInstance()
+const openAI = getOpenAIInstance()
+
 const userStates: Record<number, TEmployee & Partial<TService & TDeal> & TAdditionalType> = {}
 let calendar = null
 
@@ -23,7 +26,7 @@ const startCommandBot = async (msg: Message) => {
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
   }
 
-  const isCustomerByTgID = await botRepository.getCustomerByTgID(id)
+  const isCustomerByTgID = await botRepository.getCustomerByID({ user_tg_id: id })
 
   if (isCustomerByTgID.length) {
     await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
@@ -33,6 +36,7 @@ const startCommandBot = async (msg: Message) => {
   const customer = await botRepository.insertCustomer({
     user_tg_id: id,
     username,
+    chat_id: chatId,
     first_name,
     last_name,
   })
@@ -192,7 +196,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   const data = query.data
 
   if (data === '1') {
-    const customer = await botRepository.getCustomerByTgID(id)
+    const customer = await botRepository.getCustomerByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: customer[0].salon_id })
     const salon = await botRepository.getSalonByID({ id: customer[0].salon_id })
 
@@ -213,7 +217,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '3') {
-    const customer = await botRepository.getCustomerByTgID(id)
+    const customer = await botRepository.getCustomerByID({ user_tg_id: id })
     if (customer[0].salon_id) {
       const employees = await botRepository.getEmployeesByID({ salon_id: customer[0].salon_id })
 
@@ -300,7 +304,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data.startsWith('salon_')) {
     const salon_id = +data.split('_')[1]
-    const customer = await botRepository.getCustomerByTgID(id)
+    const customer = await botRepository.getCustomerByID({ user_tg_id: id })
     if (!customer[0].salon_id) await botRepository.putCustomer(id, { salon_id })
 
     const employees = await botRepository.getEmployeesByID({ salon_id })
@@ -354,7 +358,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const employee_id = +data.split('_')[2]
 
     const employees = await botRepository.getEmployeesByID({ id: employee_id })
-    const customer = await botRepository.getCustomerByTgID(id)
+    const customer = await botRepository.getCustomerByID({ user_tg_id: id })
     const deals = await botRepository.getDealByID({ employee_id })
     const busyTimes = deals.map((app) =>
       moment.tz(app.calendar_time, 'UTC').tz('Europe/Kiev').format('YYYY-MM-DD HH:mm'),
@@ -449,7 +453,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data === '9') {
     try {
-      const customer = await botRepository.getCustomerByTgID(id)
+      const customer = await botRepository.getCustomerByID({ user_tg_id: id })
       const deals = await botRepository.getDealsWithSalon({ customer_id: customer[0].id })
 
       for (const deal of deals) {
@@ -512,20 +516,20 @@ const contactTelBot = async (msg: Message) => {
   const { id } = msg.from
   const { first_name, last_name, phone_number } = msg.contact
 
-  const customer = await botRepository.getCustomerByTgID(id)
+  const customer = await botRepository.getCustomerByID({ user_tg_id: id })
   const admin = await botRepository.getAdminByID({ salon_id: customer[0].salon_id })
 
   if (!customer[0].phone_number) await botRepository.putCustomer(id, { phone_number })
 
-  const formattedMessage = `\u{1F464} ${first_name} ${last_name !== undefined ? last_name : ''}\n📞 ${phone_number}\n\n Замовлений здвінок`
+  const formattedMessage = `\u{1F464} ${first_name} ${last_name !== undefined ? last_name : ''}\n📞 ${phone_number}\n Замовлений здвінок`
   await bot.sendMessage(admin[0].chat_id, formattedMessage, {
     parse_mode: 'HTML',
   })
   await bot.sendMessage(msg.chat.id, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
-  return await bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
+  return await bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
 }
 
-const photoChangeBot = async (msg) => {
+const photoChangeBot = async (msg: Message) => {
   const chatId = msg.chat.id
   const photoId = msg.photo[0].file_id
 
@@ -534,6 +538,8 @@ const photoChangeBot = async (msg) => {
 
   const prompt = 'show more haircut options for this person'
 
+  console.log(22222222, msg.photo, photoInfo, photoUrl)
+
   // model: 'dall-e-2',
   // image: fs.createReadStream(photoUrl),
   // prompt,
@@ -541,29 +547,22 @@ const photoChangeBot = async (msg) => {
   // size: '1024x1024',
 
   try {
-    // const response = await openai.createImageEdit(
-    //   fs.createReadStream('./img/Volodya.jpeg'),
-    //   fs.createReadStream('./img/Volodya.jpeg'),
-    //   // prompt,
-    //   'show more haircut options for this person',
-    //
-    //   // fs.createReadStream(photoUrl),
-    //
-    //   // fs.createReadStream('mask.png'),
-    //
-    //   1,
-    //   '1024x1024',
-    // );
-    // image_url = response.data[0].url;
+    const response = await openAI.images.generate({
+      model: 'dall-e-3',
+      prompt: prompt,
+      n: 1,
+      size: '1024x1024',
+    })
+    const image_url = response.data[0].url
 
-    // console.log(image_url);
+    console.log(33333333, image_url)
 
-    // await bot.sendPhoto(chatId, image_url)
+    await bot.sendPhoto(chatId, image_url)
 
-    bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
+    return bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
   } catch (error) {
     console.error('Error:', error)
-    bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
+    return bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
   }
 }
 

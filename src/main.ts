@@ -4,21 +4,19 @@ import cors from 'cors'
 import { Router } from 'express'
 import { errorHandlerMiddleware } from './common/middleware/error.middleware'
 import './common/dotenv.config'
-import OpenAIApi from 'openai'
 import { configureHealthCheckRouter } from './modules/common/routes/healthcheck.routes'
 import { getLogger } from './common/logging'
 import getBotInstance from './modules/common/bot'
+import getOpenAIInstance from './modules/common/ai'
 import { botCommands } from './modules/bot/bot.commands'
 import { runMigrations } from './common/db/migrations'
-
-const openai = new OpenAIApi({
-  apiKey: process.env.OPENAI_KEY,
-})
+import cronJobs from './modules/common/cron/'
 
 getBotInstance()
+getOpenAIInstance()
 botCommands()
 
-const { PORT, AUTO_MIGRATION } = process.env
+const { PORT, AUTO_MIGRATION, CRON_JOB_STOP } = process.env
 
 const app = express()
 const log = getLogger()
@@ -31,6 +29,7 @@ app.use(bodyParser.json())
 
 async function addApiRoutes() {
   if (+AUTO_MIGRATION) await runMigrations()
+  if (+CRON_JOB_STOP) cronJobs.stop()
 
   const router = Router({ mergeParams: true })
 
