@@ -19,14 +19,14 @@ const startCommandBot = async (msg: Message) => {
   const isAdminByTgID = await botRepository.getAdminByTgIDEnable(id)
 
   if (isAdminByTgID.length) {
-    await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name)
+    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
   }
 
   const isCustomerByTgID = await botRepository.getCustomerByTgID(id)
 
   if (isCustomerByTgID.length) {
-    await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name)
+    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(isCustomerByTgID[0].salon_id))
   }
 
@@ -41,7 +41,7 @@ const startCommandBot = async (msg: Message) => {
     return bot.sendMessage(chatId, 'Error customer')
   }
 
-  await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name + '🎉')
+  await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 🎉`)
   return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
 }
 
@@ -49,7 +49,7 @@ const adminSignUp = async (msg: Message, match: RegExpExecArray | null) => {
   const { id, username, first_name, last_name } = msg.from
   const chatId = msg.chat.id
 
-  const isHasAdminByTgID = await botRepository.getAdminByTgID(id)
+  const isHasAdminByTgID = await botRepository.getAdminByID({ user_tg_id: id })
 
   if (isHasAdminByTgID.length) {
     return bot.sendMessage(id, 'Ви вже зареєстровані', optionsOfAdmin)
@@ -81,8 +81,7 @@ const adminSignUp = async (msg: Message, match: RegExpExecArray | null) => {
   }
 
   await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name + '🎉')
-  await bot.sendMessage(chatId, 'Ви адмін закладу ' + isHasSalon[0].name)
-  return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
+  return await bot.sendMessage(chatId, 'Ви адмін закладу ' + isHasSalon[0].name)
 }
 
 const messageBot = async (msg: Message, metaData: Metadata) => {
@@ -250,7 +249,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '5') {
-    const admin = await botRepository.getAdminByTgID(id)
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
 
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
@@ -259,14 +258,14 @@ const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '6') {
-    const admin = await botRepository.getAdminByTgID(id)
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
 
     userStates[chatId] = { step: 'name', salon_id: admin[0].salon_id }
     return await bot.sendMessage(chatId, 'Введіть назву послуги')
   }
 
   if (data === '7') {
-    const admin = await botRepository.getAdminByTgID(id)
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
 
     return bot.sendMessage(chatId, 'Оберіть позицію:', {
@@ -280,7 +279,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data.startsWith('new-service_')) {
     const service_id = +data.split('_')[1]
-    const admin = await botRepository.getAdminByTgID(id)
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
 
     userStates[chatId] = { step: 'first_name', salon_id: admin[0].salon_id, service_id }
     return await bot.sendMessage(chatId, "Введіть ім'я")
@@ -354,7 +353,6 @@ const callbackQueryBot = async (query: CallbackQuery) => {
     const service_id = +data.split('_')[1]
     const employee_id = +data.split('_')[2]
 
-    const services = await botRepository.getServiceByID({ id: service_id })
     const employees = await botRepository.getEmployeesByID({ id: employee_id })
     const customer = await botRepository.getCustomerByTgID(id)
     const deals = await botRepository.getDealByID({ employee_id })
@@ -454,17 +452,38 @@ const callbackQueryBot = async (query: CallbackQuery) => {
       const customer = await botRepository.getCustomerByTgID(id)
       const deals = await botRepository.getDealsWithSalon({ customer_id: customer[0].id })
 
-      const messages = deals.map(botService.formatDealsInfo).join('\n\n')
-      await bot.sendMessage(chatId, messages)
+      for (const deal of deals) {
+        const formattedDeal = botService.formatDealsInfo(deal)
+        await bot.sendMessage(chatId, formattedDeal.text, {
+          reply_markup: {
+            inline_keyboard: [[{ text: 'Відмінити', callback_data: formattedDeal.callback_data }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        })
+      }
+
       return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
     } catch (err) {
       log.error(err)
     }
   }
 
+  if (data.startsWith('delete_deal_')) {
+    const deal_id = +data.split('_')[2]
+
+    try {
+      await botRepository.deleteDeal(deal_id)
+      return await bot.sendMessage(chatId, 'Запис видалено.')
+    } catch (err) {
+      log.error(err)
+      return await bot.sendMessage(chatId, 'Сталася помилка при видаленні запису.')
+    }
+  }
+
   if (data === '10') {
     try {
-      const admin = await botRepository.getAdminByTgID(id)
+      const admin = await botRepository.getAdminByID({ user_tg_id: id })
       const deals = await botRepository.getDealsWithSalon({ salon_id: admin[0].salon_id })
 
       const messages = deals.map(botService.formatDealsInfo).join('\n\n')
@@ -480,10 +499,21 @@ const pollingErrorBot = (error) => {
   log.error(error)
 }
 
-const contactTelBot = (msg) => {
-  const chatId = msg.chat.id
-  bot.sendMessage(chatId, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
-  bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
+const contactTelBot = async (msg: Message) => {
+  const { id } = msg.from
+  const { first_name, last_name, phone_number } = msg.contact
+
+  const customer = await botRepository.getCustomerByTgID(id)
+  const admin = await botRepository.getAdminByID({ salon_id: customer[0].salon_id })
+
+  if (!customer[0].phone_number) await botRepository.putCustomer(id, { phone_number })
+
+  const formattedMessage = `\u{1F464} ${first_name} ${last_name !== undefined ? last_name : ''}\n📞 ${phone_number}\n\n Замовлений здвінок`
+  await bot.sendMessage(admin[0].chat_id, formattedMessage, {
+    parse_mode: 'HTML',
+  })
+  await bot.sendMessage(msg.chat.id, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
+  return await bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
 }
 
 const photoChangeBot = async (msg) => {

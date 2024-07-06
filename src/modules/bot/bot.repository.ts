@@ -16,8 +16,21 @@ const getCustomerByTgID = async (user_tg_id: number): Promise<Array<TCustomer>> 
   return db.select('*').from('customers').where({ user_tg_id }).returning('*')
 }
 
-const getAdminByTgID = async (user_tg_id: number): Promise<Array<TAdmin>> => {
-  return db.select('*').from('admins').where({ user_tg_id }).returning('*')
+const getAdminByID = async ({
+  salon_id,
+  user_tg_id,
+}: {
+  salon_id?: number
+  user_tg_id?: number
+}): Promise<Array<TAdmin>> => {
+  return db
+    .select('*')
+    .from('admins')
+    .modify((q) => {
+      if (salon_id) q.where({ salon_id })
+      if (user_tg_id) q.where({ user_tg_id })
+    })
+    .returning('*')
 }
 
 const getAdminByTgIDEnable = async (user_tg_id: number): Promise<Array<TAdmin>> => {
@@ -120,6 +133,10 @@ const insertDeal = async (data: TDeal): Promise<Array<TDeal>> => {
   return db('deals').insert(data).returning('*')
 }
 
+const deleteDeal = async (id: number): Promise<Array<TDeal>> => {
+  return db('deals').where({ id }).delete()
+}
+
 const getEmployeeWithServices = async (): Promise<Array<TEmployeeWithServiceName>> => {
   const employees = await db.select('*').from('employees')
 
@@ -152,6 +169,7 @@ const getDealsWithSalon = async ({
 
   return db('deals')
     .select(
+      'deals.id',
       'deals.calendar_time',
       'deals.notes',
       'salon.name as salon_name',
@@ -172,7 +190,7 @@ const getDealsWithSalon = async ({
 
 export const botRepository = {
   getCustomerByTgID,
-  getAdminByTgID,
+  getAdminByID,
   getAdminByTgIDEnable,
   getEmployeeWithServices,
   getDistricts,
@@ -189,4 +207,5 @@ export const botRepository = {
   insertEmployeesServices,
   insertDeal,
   putCustomer,
+  deleteDeal,
 }
