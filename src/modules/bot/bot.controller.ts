@@ -486,8 +486,17 @@ const callbackQueryBot = async (query: CallbackQuery) => {
       const admin = await botRepository.getAdminByID({ user_tg_id: id })
       const deals = await botRepository.getDealsWithSalon({ salon_id: admin[0].salon_id })
 
-      const messages = deals.map(botService.formatDealsInfo).join('\n\n')
-      await bot.sendMessage(chatId, messages)
+      for (const deal of deals) {
+        const formattedDeal = botService.formatDealsInfo(deal)
+        await bot.sendMessage(chatId, formattedDeal.text, {
+          reply_markup: {
+            inline_keyboard: [[{ text: 'Відмінити', callback_data: formattedDeal.callback_data }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        })
+      }
+
       return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
     } catch (err) {
       log.error(err)
