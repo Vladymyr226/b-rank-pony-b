@@ -13,16 +13,23 @@ const formatServiceInfo = (service: TService, index: number) => {
 }
 
 const formatDealsInfo = (data: {
+  id: number
   calendar_time: Date
   salon_name: string
   service_name: string
   employee_name: string
   notes?: string
 }) => {
-  return `- Послуга: ${data.service_name}
+  const formattedTime = moment.tz(data.calendar_time, 'UTC').tz('Europe/Kiev').format('DD-MM-YYYY HH:mm')
+  const notes = data.notes ? `\n- Нотатки: ${data.notes}` : ''
+
+  return {
+    text: `- Послуга: ${data.service_name}
 - Заклад: ${data.salon_name}
 - Фахівець: ${data.employee_name}
-- Час: ${moment.tz(data.calendar_time, 'UTC').tz('Europe/Kiev').format('DD-MM-YYYY HH:mm')} ${data.notes ? `\n- Нотатки: ${data.notes}` : ''}`
+- Час: ${formattedTime}${notes}`,
+    callback_data: `delete_deal_${data.id}`,
+  }
 }
 
 export const botService = {
