@@ -1,5 +1,8 @@
 import { TEmployeeWithServiceName, TService } from './bot.types'
 import moment from 'moment-timezone'
+import { botRepository } from './bot.repository'
+import getBotInstance from '../common/bot'
+const bot = getBotInstance()
 
 const formatEmployeeInfo = (employee: TEmployeeWithServiceName) => {
   return `*Ім'я:* ${employee.first_name}
@@ -32,8 +35,29 @@ const formatDealsInfo = (data: {
   }
 }
 
+const cronJobReminder = async () => {
+  console.log('Running a task every hour')
+
+  const deals = await botRepository.getDealsRemember()
+
+  if (deals.length) {
+    for (const deal of deals) {
+      const customers = await botRepository.getCustomerByID({ id: deal.customer_id })
+      const salon = await botRepository.getSalonByID({ id: deal.salon_id })
+      await bot.sendMessage(
+        customers[0].chat_id,
+        'Нагадування, завітати до ' +
+          salon[0].name +
+          ' о ' +
+          moment.tz(deal.calendar_time, 'UTC').tz('Europe/Kiev').format('HH:mm DD-MM-YYYY'),
+      )
+    }
+  }
+}
+
 export const botService = {
   formatEmployeeInfo,
   formatServiceInfo,
   formatDealsInfo,
+  cronJobReminder,
 }

@@ -29,10 +29,10 @@ export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration:
 export const optionsOfCustomer = (salon_id: number) => ({
   reply_markup: {
     inline_keyboard: [
-      [{ text: 'Мої записи', callback_data: '9' }],
       [{ text: salon_id ? 'Дізнатися інформацію про послуги закладу' : '', callback_data: '1' }],
       [{ text: salon_id ? 'Замовити зворотній дзвінок' : '', callback_data: '2', request_contact: true }],
       [{ text: 'Записатися онлайн до фахівця закладу', callback_data: '3' }],
+      [{ text: 'Мої записи', callback_data: '9' }],
       [
         {
           text: 'Згенерувати стильну зачіску за моїм фото',
