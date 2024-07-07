@@ -37,16 +37,32 @@ const formatDealsInfo = (data: {
 
 const cronJobReminder = async () => {
   console.log('Running a task every hour')
-
+  const currentDateUTC = moment().utc().format('YYYY-MM-DD HH:mm:ss')
   const deals = await botRepository.getDealsRemember()
 
+  console.log(333333333, deals)
+
+  const temp = await botRepository.getDealsWithSalon({})
+
+  console.log(4444444444, temp, currentDateUTC)
+
+  const filteredDeals = temp.filter((appointment) => {
+    const appointmentTime = moment.utc(appointment.calendar_time)
+    const diffInHours = appointmentTime.diff(currentDateUTC, 'hours', true) // 'true' для получения дробного значения
+    console.log('appointmentTime', appointmentTime, diffInHours)
+
+    return diffInHours > 1 && diffInHours < 2
+  })
+
+  console.log(555555555555, filteredDeals)
+
   if (deals.length) {
-    for (const deal of deals) {
+    for (const deal of filteredDeals) {
       const customers = await botRepository.getCustomerByID({ id: deal.customer_id })
       const salon = await botRepository.getSalonByID({ id: deal.salon_id })
       await bot.sendMessage(
         customers[0].chat_id,
-        'Нагадування, завітати до ' +
+        'Нагадування, про попередній запис до ' +
           salon[0].name +
           ' о ' +
           moment.tz(deal.calendar_time, 'UTC').tz('Europe/Kiev').format('HH:mm DD-MM-YYYY'),
