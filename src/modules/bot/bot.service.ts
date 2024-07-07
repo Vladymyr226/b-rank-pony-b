@@ -2,7 +2,9 @@ import { TEmployeeWithServiceName, TService } from './bot.types'
 import moment from 'moment-timezone'
 import { botRepository } from './bot.repository'
 import getBotInstance from '../common/bot'
+import { getLogger } from '../../common/logging'
 const bot = getBotInstance()
+const log = getLogger()
 
 const formatEmployeeInfo = (employee: TEmployeeWithServiceName) => {
   return `*Ім'я:* ${employee.first_name}
@@ -36,25 +38,16 @@ const formatDealsInfo = (data: {
 }
 
 const cronJobReminder = async () => {
-  console.log('Running a task every hour')
+  log.info('Running a task every hour')
   const currentDateUTC = moment().utc().format('YYYY-MM-DD HH:mm:ss')
-  // const deals = await botRepository.getDealsRemember()
-  //
-  // console.log(333333333, deals)
 
   const deals = await botRepository.getDealsWithSalon({})
-
-  console.log(4444444444, deals, currentDateUTC)
 
   const filteredDeals = deals.filter((appointment) => {
     const appointmentTime = moment.utc(appointment.calendar_time)
     const diffInHours = appointmentTime.diff(currentDateUTC, 'hours', true) // 'true' для получения дробного значения
-    console.log('appointmentTime', appointmentTime, diffInHours)
-
     return diffInHours > 1 && diffInHours < 2
   })
-
-  console.log(555555555555, filteredDeals)
 
   if (filteredDeals.length) {
     for (const deal of filteredDeals) {
