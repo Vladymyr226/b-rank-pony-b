@@ -59,11 +59,10 @@ const cronJobReminder = async () => {
   if (deals.length) {
     for (const deal of filteredDeals) {
       const customers = await botRepository.getCustomerByID({ id: deal.customer_id })
-      const salon = await botRepository.getSalonByID({ id: deal.salon_id })
       await bot.sendMessage(
         customers[0].chat_id,
         'Нагадування, про попередній запис до ' +
-          salon[0].name +
+          deal.salon_name +
           ' о ' +
           moment.tz(deal.calendar_time, 'UTC').tz('Europe/Kiev').format('HH:mm DD-MM-YYYY'),
       )
