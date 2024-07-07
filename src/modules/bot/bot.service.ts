@@ -59,6 +59,7 @@ const cronJobReminder = async () => {
   if (deals.length) {
     for (const deal of filteredDeals) {
       const customers = await botRepository.getCustomerByID({ id: deal.customer_id })
+      console.log(6666666666, customers[0].chat_id)
       await bot.sendMessage(
         customers[0].chat_id,
         'Нагадування, про попередній запис до ' +
