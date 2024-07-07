@@ -177,6 +177,8 @@ const getDealsWithSalon = async ({
   return db('deals')
     .select(
       'deals.id',
+      'deals.customer_id',
+      'deals.salon_id',
       'deals.calendar_time',
       'deals.notes',
       'salon.name as salon_name',
@@ -196,7 +198,7 @@ const getDealsWithSalon = async ({
 }
 
 const getDealsRemember = async (): Promise<Array<TDeal>> => {
-  const utcTime = moment().tz('Europe/Kiev').utc().format('YYYY-MM-DD HH:mm:ss')
+  const utcTime = moment().utc().format('YYYY-MM-DD HH:mm:ss')
 
   return db
     .select('*')
