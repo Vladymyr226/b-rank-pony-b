@@ -39,14 +39,15 @@ const formatDealsInfo = (data: {
 
 const cronJobReminder = async () => {
   log.info('Running a task every hour')
-  const currentDateUTC = moment().utc().format('YYYY-MM-DD HH:mm:ss')
-
+  const currentDateUTC = moment().utc()
   const deals = await botRepository.getDealsWithSalon({})
 
   const filteredDeals = deals.filter((appointment) => {
     const appointmentTime = moment.utc(appointment.calendar_time)
-    const diffInHours = appointmentTime.diff(currentDateUTC, 'hours', true) // 'true' для получения дробного значения
-    return diffInHours > 1 && diffInHours < 2
+    const minutes = appointmentTime.diff(currentDateUTC, 'minutes', true) // 'true' для получения дробного значения
+
+    const diffInMinutes = Math.round(minutes)
+    return diffInMinutes >= 60 && diffInMinutes < 120
   })
 
   if (filteredDeals.length) {
