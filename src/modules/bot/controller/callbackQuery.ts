@@ -1,196 +1,17 @@
-import { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
-import { tgCalendar, optionsOfCustomer, optionsOfAdmin } from './bot.config'
-import getBotInstance from '../common/bot'
-import { getLogger } from '../../common/logging'
-import { botRepository } from './bot.repository'
-import { TAdditionalType, TDeal, TEmployee, TService } from './bot.types'
-import { botService } from './bot.service'
+import { CallbackQuery } from 'node-telegram-bot-api'
+import { botRepository } from '../bot.repository'
+import { botService } from '../bot.service'
+import { optionsOfAdmin, optionsOfCustomer, tgCalendar } from '../bot.config'
 import moment from 'moment-timezone'
-import getOpenAIInstance from '../common/ai'
+import { getLogger } from '../../../common/logging'
+import getBotInstance from '../../common/bot'
+import { userStates } from '../bot.commands'
 
 const log = getLogger()
 const bot = getBotInstance()
-const openAI = getOpenAIInstance()
-
-const userStates: Record<number, TEmployee & Partial<TService & TDeal> & TAdditionalType> = {}
 let calendar = null
 
-const startCommandBot = async (msg: Message) => {
-  const { id, username, first_name, last_name } = msg.from
-  const chatId = msg.chat.id
-
-  const isAdminByTgID = await botRepository.getAdminByTgIDEnable(id)
-
-  if (isAdminByTgID.length) {
-    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
-  }
-
-  const isCustomerByTgID = await botRepository.getCustomerByID({ user_tg_id: id })
-
-  if (isCustomerByTgID.length) {
-    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(isCustomerByTgID[0].salon_id))
-  }
-
-  const customer = await botRepository.insertCustomer({
-    user_tg_id: id,
-    username,
-    chat_id: chatId,
-    first_name,
-    last_name,
-  })
-  if (!customer.length) {
-    log.error(customer)
-    return bot.sendMessage(chatId, 'Error customer')
-  }
-
-  await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 🎉`)
-  return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
-}
-
-const adminSignUp = async (msg: Message, match: RegExpExecArray | null) => {
-  const { id, username, first_name, last_name } = msg.from
-  const chatId = msg.chat.id
-
-  const isHasAdminByTgID = await botRepository.getAdminByID({ user_tg_id: id })
-
-  if (isHasAdminByTgID.length) {
-    return bot.sendMessage(id, 'Ви вже зареєстровані', optionsOfAdmin)
-  }
-
-  if (!match) return
-
-  const salon_id = +match[0].split(' ')[2]
-
-  const isHasSalon = await botRepository.getSalonByID({ id: salon_id })
-
-  if (!isHasSalon.length) {
-    log.error('Salon by ID: ' + salon_id + ' is disappeared')
-    return bot.sendMessage(chatId, 'Нажаль, заклад не знайдено')
-  }
-
-  const admin = await botRepository.insertAdmin({
-    user_tg_id: id,
-    salon_id,
-    username,
-    first_name,
-    last_name,
-    chat_id: chatId,
-  })
-
-  if (!admin.length) {
-    log.error(admin)
-    return bot.sendMessage(chatId, 'Error admin')
-  }
-
-  await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name + '🎉')
-  return await bot.sendMessage(chatId, 'Ви адмін закладу ' + isHasSalon[0].name)
-}
-
-const messageBot = async (msg: Message, metaData: Metadata) => {
-  const chatId = msg.chat.id
-  const text = msg.text
-
-  const userState = userStates[chatId]
-
-  if (userState) {
-    switch (userState.step) {
-      case 'name':
-        userState.name = text
-        userState.step = 'description'
-        await bot.sendMessage(chatId, 'Введіть опис послуги')
-        break
-      case 'description':
-        userState.description = text
-        userState.step = 'price'
-        await bot.sendMessage(chatId, 'Введіть ціну послуги (в грн)')
-        break
-      case 'first_name':
-        userState.first_name = text
-        userState.step = 'phone'
-        await bot.sendMessage(chatId, 'Введіть номер телефону')
-        break
-      case 'phone':
-        userState.phone = text
-        userState.step = 'work_hour_from'
-        await bot.sendMessage(chatId, 'Працює з (формат ЧЧ:ХХ)')
-        break
-      case 'work_hour_from':
-        userState.work_hour_from = text
-        userState.step = 'work_hour_to'
-        await bot.sendMessage(chatId, 'Працює до (формат ЧЧ:ХХ)')
-        break
-      case 'work_hour_to':
-        userState.work_hour_to = text
-        userState.step = 'duration'
-        await bot.sendMessage(chatId, 'Введіть тривалість послуги (в хвилинах)')
-        break
-      case 'price':
-        userState.price = +text
-        delete userState.step
-
-        try {
-          await botRepository.insertService(userState as TService)
-          delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Дані послуги збережені. Дякуємо!')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
-        } catch (e) {
-          log.error(e)
-          delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
-        }
-      case 'comment':
-        const {
-          salon_id,
-          service_id: serviceId,
-          employee_id,
-          customer_id,
-          calendar_time,
-          calendarTimeResponse,
-        } = userStates[chatId] || {}
-        try {
-          await botRepository.insertDeal({
-            salon_id,
-            service_id: serviceId,
-            employee_id,
-            customer_id,
-            notes: text,
-            calendar_time,
-          })
-          await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
-          return delete userStates[chatId]
-        } catch (error) {
-          log.error(error)
-          await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
-          return delete userStates[chatId]
-        }
-      case 'duration':
-        userState.duration = +text
-        const { service_id } = userState
-        delete userState.service_id
-        delete userState.step
-
-        try {
-          const employee = await botRepository.insertEmployee(userState)
-          await botRepository.insertEmployeesServices({ employee_id: employee[0].id, service_id })
-          delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Дані співробітника збережено. Дякуємо!')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
-        } catch (e) {
-          log.error(e)
-          delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
-        }
-    }
-  }
-}
-
-const callbackQueryBot = async (query: CallbackQuery) => {
+export const callbackQueryBot = async (query: CallbackQuery) => {
   const { id } = query.from
   const chatId = query.message.chat.id
   const data = query.data
@@ -258,7 +79,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
   }
 
   if (data === '6') {
@@ -445,7 +266,7 @@ const callbackQueryBot = async (query: CallbackQuery) => {
 
       const messages = services.map(botService.formatEmployeeInfo).join('\n\n')
       await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
+      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
     } catch (err) {
       log.error(err)
     }
@@ -501,77 +322,73 @@ const callbackQueryBot = async (query: CallbackQuery) => {
         })
       }
 
-      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin)
+      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
     } catch (err) {
       log.error(err)
     }
   }
-}
 
-const pollingErrorBot = (error) => {
-  log.error(error)
-}
+  if (data === '11') {
+    try {
+      const admin = await botRepository.getAdminByID({ user_tg_id: id })
+      const editedRole = await botRepository.putAdmin(id, { enable: !admin[0].enable })
 
-const contactTelBot = async (msg: Message) => {
-  const { id } = msg.from
-  const { first_name, last_name, phone_number } = msg.contact
-
-  const customer = await botRepository.getCustomerByID({ user_tg_id: id })
-  const admin = await botRepository.getAdminByID({ salon_id: customer[0].salon_id })
-
-  if (!customer[0].phone_number) await botRepository.putCustomer(id, { phone_number })
-
-  const formattedMessage = `\u{1F464} ${first_name} ${last_name !== undefined ? last_name : ''}\n📞 ${phone_number}\n Замовлений здвінок`
-  await bot.sendMessage(admin[0].chat_id, formattedMessage, {
-    parse_mode: 'HTML',
-  })
-  await bot.sendMessage(msg.chat.id, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
-  return await bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
-}
-
-const photoChangeBot = async (msg: Message) => {
-  const chatId = msg.chat.id
-  const photoId = msg.photo[0].file_id
-
-  const photoInfo = await bot.getFile(photoId)
-  const photoUrl = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${photoInfo.file_path}`
-
-  const prompt = 'show more haircut options for this person'
-
-  console.log(22222222, msg.photo, photoInfo, photoUrl)
-
-  // model: 'dall-e-2',
-  // image: fs.createReadStream(photoUrl),
-  // prompt,
-  // n: 1,
-  // size: '1024x1024',
-
-  try {
-    const response = await openAI.images.generate({
-      model: 'dall-e-3',
-      prompt: prompt,
-      n: 1,
-      size: '1024x1024',
-    })
-    const image_url = response.data[0].url
-
-    console.log(33333333, image_url)
-
-    await bot.sendPhoto(chatId, image_url)
-
-    return bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
-  } catch (error) {
-    console.error('Error:', error)
-    return bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
+      return bot.sendMessage(chatId, `Ви тепер ${editedRole[0].enable ? 'Admin' : 'Customer'}`)
+    } catch (err) {
+      log.error(err)
+    }
   }
-}
 
-export const BotController = {
-  startCommandBot,
-  adminSignUp,
-  callbackQueryBot,
-  messageBot,
-  pollingErrorBot,
-  contactTelBot,
-  photoChangeBot,
+  if (data === '12') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const employees = await botRepository.getEmployeesByID({ salon_id: admin[0].salon_id })
+    const employeeOptions = employees.map((employee) => [
+      {
+        text: `${employee.first_name}`,
+        callback_data: `edit_employee_${employee.id}`,
+      },
+    ])
+
+    return await bot.sendMessage(chatId, 'Виберіть співробітника для редагування:', {
+      reply_markup: {
+        inline_keyboard: employeeOptions,
+      },
+    })
+  }
+
+  if (data && data.startsWith('edit_employee_')) {
+    const employee_id = +data.split('_')[2]
+    userStates[chatId] = { ...userStates[chatId], step: 'confirm_edit_name', employee_id }
+
+    return await bot.sendMessage(
+      chatId,
+      'Надішліть "так", щоб змінити ім\'я співробітника, або "ні", щоб перейти до наступного кроку.',
+    )
+  }
+
+  if (data === '13') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const employees = await botRepository.getEmployeesByID({ salon_id: admin[0].salon_id })
+    const employeeOptions = employees.map((employee) => [
+      {
+        text: `${employee.first_name}`,
+        callback_data: `delete_employee_${employee.id}`,
+      },
+    ])
+
+    return await bot.sendMessage(chatId, 'Виберіть співробітника для видалення:', {
+      reply_markup: {
+        inline_keyboard: employeeOptions,
+      },
+    })
+  }
+
+  if (data && data.startsWith('delete_employee_')) {
+    const employee_id = +data.split('_')[2]
+    userStates[chatId] = { ...userStates[chatId], step: 'confirm_delete_employee', employee_id }
+    return await bot.sendMessage(
+      chatId,
+      'Ви впевнені, що хочете видалити цього співробітника? Введіть "так" для підтвердження або "ні" для скасування.',
+    )
+  }
 }

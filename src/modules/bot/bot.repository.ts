@@ -44,6 +44,10 @@ const getAdminByTgIDEnable = async (user_tg_id: number): Promise<Array<TAdmin>> 
   return db.select('*').from('admins').where({ user_tg_id, enable: true }).returning('*')
 }
 
+const getChangeRoleByID = async (user_tg_id: number): Promise<Array<{ user_tg_id: number }>> => {
+  return db.select('*').from('change_role').where({ user_tg_id }).returning('*')
+}
+
 const getSalonByID = async ({ id, district_id }: { id?: number; district_id?: number }): Promise<Array<TSalon>> => {
   return db
     .select('*')
@@ -120,12 +124,20 @@ const putCustomer = async (user_tg_id: number, data: Partial<TCustomer>): Promis
   return db('customers').update(data).where({ user_tg_id }).returning('*')
 }
 
+const putAdmin = async (user_tg_id: number, data: Partial<TAdmin>): Promise<Array<TAdmin>> => {
+  return db('admins').update(data).where({ user_tg_id }).returning('*')
+}
+
+const putEmployee = async (id: number, data: Partial<TEmployee>): Promise<Array<TEmployee>> => {
+  return db('employees').update(data).where({ id }).returning('*')
+}
+
 const insertAdmin = async (data: TAdmin): Promise<Array<TAdmin>> => {
   return db('admins').insert(data).returning('*')
 }
 
 const insertEmployee = async (data: TEmployee): Promise<Array<TEmployee>> => {
-  return db('employees').insert(data).returning('*')
+  return db('employees').insert(data).onConflict('id').merge().returning('*')
 }
 
 const insertService = async (data: TService): Promise<Array<TService>> => {
@@ -142,6 +154,10 @@ const insertDeal = async (data: TDeal): Promise<Array<TDeal>> => {
 
 const deleteDeal = async (id: number): Promise<Array<TDeal>> => {
   return db('deals').where({ id }).delete()
+}
+
+const deleteEmployee = async (id: number): Promise<Array<TEmployee>> => {
+  return db('employees').where({ id }).delete()
 }
 
 const getEmployeeWithServices = async (): Promise<Array<TEmployeeWithServiceName>> => {
@@ -220,6 +236,7 @@ export const botRepository = {
   getDealByID,
   getDealsWithSalon,
   getDealsRemember,
+  getChangeRoleByID,
   insertCustomer,
   insertAdmin,
   insertEmployee,
@@ -227,5 +244,8 @@ export const botRepository = {
   insertEmployeesServices,
   insertDeal,
   putCustomer,
+  putAdmin,
+  putEmployee,
   deleteDeal,
+  deleteEmployee,
 }

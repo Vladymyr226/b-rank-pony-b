@@ -92,4 +92,5 @@ export type TEmployeeWithServiceName = TEmployee & { services: Array<Pick<TServi
 export type TAdditionalType = {
   step: string
   calendarTimeResponse?: string
+  employee_id?: number
 }
