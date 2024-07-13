@@ -26,7 +26,7 @@ export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration:
   return calendar
 }
 
-export const optionsOfCustomer = (salon_id: number) => ({
+export const optionsOfCustomer = (salon_id: number, changeRole?: boolean) => ({
   reply_markup: {
     inline_keyboard: [
       [{ text: salon_id ? 'Дізнатися інформацію про послуги закладу' : '', callback_data: '1' }],
@@ -39,22 +39,26 @@ export const optionsOfCustomer = (salon_id: number) => ({
           callback_data: '4',
         },
       ],
+      [{ text: changeRole ? 'Change role' : '', callback_data: '11' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,
   },
 })
 
-export const optionsOfAdmin = {
+export const optionsOfAdmin = (changeRole?: boolean) => ({
   reply_markup: {
     inline_keyboard: [
       [{ text: 'Записи закладу', callback_data: '10' }],
       [{ text: 'Наші послуги', callback_data: '5' }],
       [{ text: 'Додати нову послугу', callback_data: '6' }],
       [{ text: 'Додати нового співробітника', callback_data: '7' }],
+      [{ text: 'Редагувати співробітника', callback_data: '12' }],
+      [{ text: 'Видалити співробітника', callback_data: '13' }],
       [{ text: 'Показати всіх співробітників', callback_data: '8' }],
+      [{ text: changeRole ? 'Change role' : '', callback_data: '11' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,
   },
-}
+})

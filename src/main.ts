@@ -7,13 +7,11 @@ import './common/dotenv.config'
 import { configureHealthCheckRouter } from './modules/common/routes/healthcheck.routes'
 import { getLogger } from './common/logging'
 import getBotInstance from './modules/common/bot'
-import getOpenAIInstance from './modules/common/ai'
 import { botCommands } from './modules/bot/bot.commands'
 import { runMigrations } from './common/db/migrations'
 import cronJobs from './modules/common/cron/'
 
 getBotInstance()
-getOpenAIInstance()
 botCommands()
 
 const { PORT, AUTO_MIGRATION, CRON_JOB_STOP } = process.env
