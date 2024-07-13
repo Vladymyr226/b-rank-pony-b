@@ -12,7 +12,7 @@ import { runMigrations } from './common/db/migrations'
 import cronJobs from './modules/common/cron/'
 
 getBotInstance()
-// botCommands()
+botCommands()
 
 const { PORT, AUTO_MIGRATION, CRON_JOB_STOP } = process.env
 
