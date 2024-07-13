@@ -14,7 +14,7 @@ export async function errorHandlerMiddleware(err: any, res: Response) {
 
   const logger = getLogger()
 
-  logger.error(err)
+  // logger.error(err)
 
   res.status(statusCode).json({ message })
 }
