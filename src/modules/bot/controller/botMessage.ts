@@ -235,6 +235,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           userState.price = +text
         } else {
           await bot.sendMessage(chatId, 'Ціну введено неправильно. Спробуйте ще раз.')
+          break
         }
         delete userState.step
 
