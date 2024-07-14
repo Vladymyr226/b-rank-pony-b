@@ -132,6 +132,10 @@ const putEmployee = async (id: number, data: Partial<TEmployee>): Promise<Array<
   return db('employees').update(data).where({ id }).returning('*')
 }
 
+const putService = async (id: number, data: Partial<TService>): Promise<Array<TService>> => {
+  return db('services').update(data).where({ id }).returning('*')
+}
+
 const insertAdmin = async (data: TAdmin): Promise<Array<TAdmin>> => {
   return db('admins').insert(data).returning('*')
 }
@@ -158,6 +162,10 @@ const deleteDeal = async (id: number): Promise<Array<TDeal>> => {
 
 const deleteEmployee = async (id: number): Promise<Array<TEmployee>> => {
   return db('employees').where({ id }).delete()
+}
+
+const deleteService = async (id: number): Promise<Array<TService>> => {
+  return db('services').where({ id }).delete()
 }
 
 const getEmployeeWithServices = async (): Promise<Array<TEmployeeWithServiceName>> => {
@@ -246,6 +254,8 @@ export const botRepository = {
   putCustomer,
   putAdmin,
   putEmployee,
+  putService,
   deleteDeal,
   deleteEmployee,
+  deleteService,
 }

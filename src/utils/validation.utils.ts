@@ -14,7 +14,7 @@ export const isValidTime = (time: string) => {
   return timePattern.test(time)
 }
 
-export const isValidDuration = (duration: string) => {
+export const isValidDurationPrice = (duration: string) => {
   const durationPattern = /^\d+$/
   const durationNumber = parseInt(duration, 10)
   return durationPattern.test(duration) && durationNumber > 0

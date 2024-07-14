@@ -358,7 +358,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data && data.startsWith('edit_employee_')) {
     const employee_id = +data.split('_')[2]
-    userStates[chatId] = { ...userStates[chatId], step: 'confirm_edit_name', employee_id }
+    userStates[chatId] = { ...userStates[chatId], step: 'confirm_edit_employee_name', employee_id }
 
     return await bot.sendMessage(
       chatId,
@@ -389,6 +389,59 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     return await bot.sendMessage(
       chatId,
       'Ви впевнені, що хочете видалити цього співробітника? Введіть "так" для підтвердження або "ні" для скасування.',
+    )
+  }
+
+  if (data === '14') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
+    const serviceOptions = services.map((service) => [
+      {
+        text: `${service.name}`,
+        callback_data: `edit_service_${service.id}`,
+      },
+    ])
+
+    return await bot.sendMessage(chatId, 'Виберіть послугу для редагування:', {
+      reply_markup: {
+        inline_keyboard: serviceOptions,
+      },
+    })
+  }
+
+  if (data && data.startsWith('edit_service_')) {
+    const service_id = +data.split('_')[2]
+    userStates[chatId] = { ...userStates[chatId], step: 'confirm_edit_service_name', service_id }
+
+    return await bot.sendMessage(
+      chatId,
+      'Надішліть "так", щоб змінити назву послуги, або "ні", щоб перейти до наступного кроку.',
+    )
+  }
+
+  if (data === '15') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
+    const serviceOptions = services.map((service) => [
+      {
+        text: `${service.name}`,
+        callback_data: `delete_service_${service.id}`,
+      },
+    ])
+
+    return await bot.sendMessage(chatId, 'Виберіть послугу для видалення:', {
+      reply_markup: {
+        inline_keyboard: serviceOptions,
+      },
+    })
+  }
+
+  if (data && data.startsWith('delete_service_')) {
+    const service_id = +data.split('_')[2]
+    userStates[chatId] = { ...userStates[chatId], step: 'confirm_delete_service', service_id }
+    return await bot.sendMessage(
+      chatId,
+      'Ви впевнені, що хочете видалити цю послугу? Введіть "так" для підтвердження або "ні" для скасування.',
     )
   }
 }
