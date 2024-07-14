@@ -5,7 +5,7 @@ import { optionsOfAdmin, optionsOfCustomer } from '../bot.config'
 import { getLogger } from '../../../common/logging'
 import getBotInstance from '../../common/bot'
 import { userStates } from '../bot.commands'
-import { isValidDuration, isValidName, isValidPhoneNumber, isValidTime } from '../../../utils/validation.utils'
+import { isValidDurationPrice, isValidName, isValidPhoneNumber, isValidTime } from '../../../utils/validation.utils'
 
 const log = getLogger()
 const bot = getBotInstance()
@@ -18,10 +18,54 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
 
   if (userState) {
     switch (userState.step) {
+      case 'confirm_edit_service_name':
+        if (text.toLowerCase() === 'так') {
+          userState.step = 'edit_service_name'
+          await bot.sendMessage(chatId, 'Введіть нову назву послуги')
+        } else if (text.toLowerCase() === 'ні') {
+          userState.step = 'confirm_edit_service_description'
+          await bot.sendMessage(
+            chatId,
+            'Надішліть "так", щоб змінити опис послуги, або "ні", щоб перейти до наступного кроку.',
+          )
+        } else {
+          await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
+        }
+        break
+      case 'edit_service_name':
+        userState.name = text
+        userState.step = 'confirm_edit_service_description'
+        await bot.sendMessage(
+          chatId,
+          'Надішліть "так", щоб змінити опис послуги, або "ні", щоб перейти до наступного кроку.',
+        )
+        break
       case 'name':
         userState.name = text
         userState.step = 'description'
         await bot.sendMessage(chatId, 'Введіть опис послуги')
+        break
+      case 'confirm_edit_service_description':
+        if (text.toLowerCase() === 'так') {
+          userState.step = 'edit_service_description'
+          await bot.sendMessage(chatId, 'Введіть новий опис послуги')
+        } else if (text.toLowerCase() === 'ні') {
+          userState.step = 'confirm_edit_service_price'
+          await bot.sendMessage(
+            chatId,
+            'Надішліть "так", щоб змінити ціну послуги, або "ні", щоб перейти до наступного кроку.',
+          )
+        } else {
+          await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
+        }
+        break
+      case 'edit_service_description':
+        userState.description = text
+        userState.step = 'confirm_edit_service_price'
+        await bot.sendMessage(
+          chatId,
+          'Надішліть "так", щоб змінити ціну послуги, або "ні", щоб перейти до наступного кроку.',
+        )
         break
       case 'description':
         userState.description = text
@@ -37,7 +81,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await bot.sendMessage(chatId, "Ім'я введено неправильно. Спробуйте ще раз.")
         }
         break
-      case 'confirm_edit_name':
+      case 'confirm_edit_employee_name':
         if (text.toLowerCase() === 'так') {
           userState.step = 'edit_name'
           await bot.sendMessage(chatId, "Введіть нове ім'я для співробітника")
@@ -168,8 +212,30 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await bot.sendMessage(chatId, 'Час введено неправильно. Спробуйте ще раз.')
         }
         break
+      case 'confirm_edit_service_price':
+        if (text.toLowerCase() === 'так') {
+          userState.step = 'edit_service_price'
+          await bot.sendMessage(chatId, 'Введіть нову ціну послуги (в грн)')
+        } else if (text.toLowerCase() === 'ні') {
+          await updateService(userState, chatId)
+        } else {
+          await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
+        }
+        break
+      case 'edit_service_price':
+        if (isValidDurationPrice(text)) {
+          userState.price = +text
+          await updateService(userState, chatId)
+        } else {
+          await bot.sendMessage(chatId, 'Ціну введено неправильно. Спробуйте ще раз.')
+        }
+        break
       case 'price':
-        userState.price = +text
+        if (isValidDurationPrice(text)) {
+          userState.price = +text
+        } else {
+          await bot.sendMessage(chatId, 'Ціну введено неправильно. Спробуйте ще раз.')
+        }
         delete userState.step
 
         try {
@@ -224,6 +290,20 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
         }
         break
+      case 'confirm_delete_service':
+        if (text.toLowerCase() === 'так') {
+          await botRepository.deleteService(userState.service_id)
+          await bot.sendMessage(chatId, 'Послугу видалено успішно.')
+          delete userStates[chatId]
+          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+        } else if (text.toLowerCase() === 'ні') {
+          await bot.sendMessage(chatId, 'Видалення послуги скасовано.')
+          delete userStates[chatId]
+          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+        } else {
+          await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
+        }
+        break
       case 'confirm_edit_duration':
         if (text.toLowerCase() === 'так') {
           userState.step = 'edit_duration'
@@ -235,7 +315,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
         }
         break
       case 'edit_duration':
-        if (isValidDuration(text)) {
+        if (isValidDurationPrice(text)) {
           userState.duration = +text
           await updateEmployee(userState, chatId)
         } else {
@@ -243,7 +323,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
         }
         break
       case 'duration':
-        if (isValidDuration(text)) {
+        if (isValidDurationPrice(text)) {
           userState.duration = +text
         } else {
           await bot.sendMessage(chatId, 'Тривалість введено неправильно. Спробуйте ще раз.')
@@ -279,6 +359,24 @@ const updateEmployee = async (userState, chatId: number) => {
     await botRepository.putEmployee(id, userState)
     delete userStates[chatId]
     await bot.sendMessage(chatId, 'Дані співробітника збережено. Дякуємо!')
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+  } catch (e) {
+    log.error(e)
+    delete userStates[chatId]
+    await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+  }
+}
+
+const updateService = async (userState, chatId: number) => {
+  const id = userState.service_id
+  delete userState.service_id
+  delete userState.step
+
+  try {
+    await botRepository.putService(id, userState)
+    delete userStates[chatId]
+    await bot.sendMessage(chatId, 'Дані послуги збережено. Дякуємо!')
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
   } catch (e) {
     log.error(e)
