@@ -1,6 +1,6 @@
 {
   "name": "pony",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "engines": {
     "node": "22.x"
   },
@@ -21,15 +21,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Vladymyr226/itsEasyPlatformBackEnd.git"
+    "url": "https://github.com/Vladymyr226/b-rank-pony-b"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Vladymyr226/itsEasyPlatformBackEnd/issues"
+    "url": "https://github.com/Vladymyr226/b-rank-pony-b/issues"
   },
-  "homepage": "https://github.com/Vladymyr226/itsEasyPlatformBackEnd#readme",
+  "homepage": "https://github.com/Vladymyr226/b-rank-pony-b#readme",
   "dependencies": {
     "@types/body-parser": "^1.19.2",
     "@types/bunyan": "^1.8.11",
