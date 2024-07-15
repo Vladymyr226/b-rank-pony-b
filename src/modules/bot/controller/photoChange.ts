@@ -1,68 +1,54 @@
 import { Message } from 'node-telegram-bot-api'
 import { optionsOfCustomer } from '../bot.config'
-import Replicate from 'replicate'
 import getBotInstance from '../../common/bot'
+import getReplicateAIInstance from '../../common/ai'
+import { getLogger } from '../../../common/logging'
 
+const log = getLogger()
 const bot = getBotInstance()
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-})
+const replicate = getReplicateAIInstance()
 
 export const photoChangeBot = async (msg: Message) => {
   const chatId = msg.chat.id
-  const photoId = msg.photo[msg.photo.length - 1].file_id // Используем наибольшее разрешение
+  await bot.sendMessage(chatId, 'Обробка фото займе декілька секунд...')
 
+  const photoId = msg.photo[msg.photo.length - 1].file_id
   const photoInfo = await bot.getFile(photoId)
   const photoUrl = `https://api.telegram.org/file/bot${process.env.TG_BOT_TOKEN}/${photoInfo.file_path}`
 
-  const prompt = 'make her hair shorter and with bangs'
-
-  console.log(22222222, msg.photo, photoInfo, photoUrl)
+  const prompt = msg.caption || 'show a modern hairstyle, highly detailed, realistic, trendy, fashionable, high quality'
 
   try {
-    // const response2 = await axios({
-    //   url: photoUrl,
-    //   method: 'GET',
-    //   responseType: 'arraybuffer', // Ensure response is treated as an array buffer
-    // })
-
-    // const response = await openAI.images.generate({
-    //   model: 'dall-e-3',
-    //   // image: photoUrl,
-    //   prompt: prompt,
-    //   n: 1,
-    //   size: '1024x1024',
-    // })
-    // const image_url = response.data[0].url
-
     const output = await replicate.run(
-      'stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc',
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      process.env.REPLICATE_HASH_MODEL,
       {
         input: {
           image: photoUrl,
-          width: 768,
-          height: 768,
+          width: 1080,
+          height: 1920,
           prompt,
           refine: 'expert_ensemble_refiner',
           scheduler: 'K_EULER',
           lora_scale: 0.6,
-          num_outputs: 1,
-          guidance_scale: 7.5,
+          num_outputs: 4,
+          guidance_scale: 10,
           apply_watermark: false,
           high_noise_frac: 0.8,
-          negative_prompt: '',
-          prompt_strength: 0.8,
-          num_inference_steps: 25,
+          negative_prompt: 'age and gender are different',
+          prompt_strength: 0.9,
+          num_inference_steps: 50,
         },
       },
     )
-    console.log(output)
 
-    await bot.sendPhoto(chatId, output[0])
-
+    for (const outputElement of Object.values(output)) {
+      await bot.sendPhoto(chatId, outputElement)
+    }
     return bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
   } catch (error) {
-    console.error('Error:', error)
+    log.error('Error:', error)
     return bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')
   }
 }

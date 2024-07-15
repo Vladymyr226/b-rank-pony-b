@@ -1,14 +1,14 @@
-// import { OpenAI } from 'openai'
-//
-// let openAIInstance = null
-//
-// const getOpenAIInstance = () => {
-//   if (!openAIInstance) {
-//     openAIInstance = new OpenAI({
-//       apiKey: process.env.OPENAI_KEY,
-//     })
-//   }
-//   return openAIInstance
-// }
-//
-// export default getOpenAIInstance
+import Replicate from 'replicate'
+
+let replicate: Replicate = null
+
+const getReplicateAIInstance = () => {
+  if (!replicate) {
+    replicate = new Replicate({
+      auth: process.env.REPLICATE_API_TOKEN,
+    })
+  }
+  return replicate
+}
+
+export default getReplicateAIInstance
