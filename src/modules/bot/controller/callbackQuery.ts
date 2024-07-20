@@ -81,6 +81,10 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
 
+    if (!services.length) {
+      return await bot.sendMessage(chatId, 'Послуги відсутні')
+    }
+
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
@@ -268,6 +272,10 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     try {
       const services = await botRepository.getEmployeeWithServices()
 
+      if (!services.length) {
+        return await bot.sendMessage(chatId, 'Співробітники відсутні')
+      }
+
       const messages = services.map(botService.formatEmployeeInfo).join('\n\n')
       await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
       return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
@@ -354,6 +362,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
   if (data === '12') {
     const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const employees = await botRepository.getEmployeesByID({ salon_id: admin[0].salon_id })
+
+    if (!employees.length) {
+      return await bot.sendMessage(chatId, 'Співробітники відсутні')
+    }
+
     const employeeOptions = employees.map((employee) => [
       {
         text: `${employee.first_name}`,
@@ -381,6 +394,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
   if (data === '13') {
     const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const employees = await botRepository.getEmployeesByID({ salon_id: admin[0].salon_id })
+
+    if (!employees.length) {
+      return await bot.sendMessage(chatId, 'Співробітники відсутні')
+    }
+
     const employeeOptions = employees.map((employee) => [
       {
         text: `${employee.first_name}`,
@@ -407,6 +425,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
   if (data === '14') {
     const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
+
+    if (!services.length) {
+      return await bot.sendMessage(chatId, 'Послуги відсутні')
+    }
+
     const serviceOptions = services.map((service) => [
       {
         text: `${service.name}`,
@@ -434,6 +457,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
   if (data === '15') {
     const admin = await botRepository.getAdminByID({ user_tg_id: id })
     const services = await botRepository.getServiceByID({ salon_id: admin[0].salon_id })
+
+    if (!services.length) {
+      return await bot.sendMessage(chatId, 'Послуги відсутні')
+    }
+
     const serviceOptions = services.map((service) => [
       {
         text: `${service.name}`,
