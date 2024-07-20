@@ -43,5 +43,5 @@ export const adminSignUp = async (msg: Message, match: RegExpExecArray | null) =
   }
 
   await bot.sendMessage(chatId, 'Вітаємо, ' + first_name + ' ' + last_name + '🎉')
-  return await bot.sendMessage(chatId, 'Ви адмін закладу ' + isHasSalon[0].name)
+  return await bot.sendMessage(chatId, 'Ви є адміном закладу ' + isHasSalon[0].name)
 }
