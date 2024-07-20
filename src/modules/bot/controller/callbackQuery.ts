@@ -70,7 +70,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
   }
 
   if (data === '4') {
-    return bot.sendMessage(chatId, 'Будь ласка, надішліть своє фото для генерації стильної зачіски.')
+    return await bot.answerCallbackQuery(query.id, {
+      text: `📸 Будь ласка, надішліть своє фото для генерації стильної зачіски.
+Для більш точного результату напишіть запит англійською мовою та додайте в кінці стать 👩👨`,
+      show_alert: true,
+    })
   }
 
   if (data === '5') {
@@ -277,11 +281,15 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
       const customer = await botRepository.getCustomerByID({ user_tg_id: id })
       const deals = await botRepository.getDealsWithSalon({ customer_id: customer[0].id })
 
+      if (!deals.length) {
+        return await bot.sendMessage(chatId, 'Записи відсутні')
+      }
+
       for (const deal of deals) {
         const formattedDeal = botService.formatDealsInfo(deal)
         await bot.sendMessage(chatId, formattedDeal.text, {
           reply_markup: {
-            inline_keyboard: [[{ text: 'Відмінити', callback_data: formattedDeal.callback_data }]],
+            inline_keyboard: [[{ text: 'Скасувати', callback_data: formattedDeal.callback_data }]],
             resize_keyboard: true,
             one_time_keyboard: true,
           },
@@ -311,11 +319,15 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
       const admin = await botRepository.getAdminByID({ user_tg_id: id })
       const deals = await botRepository.getDealsWithSalon({ salon_id: admin[0].salon_id })
 
+      if (!deals.length) {
+        return await bot.sendMessage(chatId, 'Записи відсутні')
+      }
+
       for (const deal of deals) {
         const formattedDeal = botService.formatDealsInfo(deal)
         await bot.sendMessage(chatId, formattedDeal.text, {
           reply_markup: {
-            inline_keyboard: [[{ text: 'Відмінити', callback_data: formattedDeal.callback_data }]],
+            inline_keyboard: [[{ text: 'Скасувати', callback_data: formattedDeal.callback_data }]],
             resize_keyboard: true,
             one_time_keyboard: true,
           },

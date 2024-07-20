@@ -9,7 +9,7 @@ const log = getLogger()
 const formatEmployeeInfo = (employee: TEmployeeWithServiceName) => {
   return `*Ім'я:* ${employee.first_name}
 *Телефон:* ${employee.phone}
-*Робочі години:* ${employee.work_hour_from} - ${employee.work_hour_to}
+*Робочі години:* ${moment(employee.work_hour_from, 'HH:mm:ss').format('HH:mm')} - ${moment(employee.work_hour_to, 'HH:mm:ss').format('HH:mm')}
 *Послуги:* ${employee.services.join(', ')}`
 }
 

@@ -15,14 +15,19 @@ export const startCommandBot = async (msg: Message) => {
   const tgChangeByRole = await botRepository.getChangeRoleByID(id)
 
   if (isAdminByTgID.length) {
-    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
+    const getSalon = await botRepository.getSalonByID({ id: isAdminByTgID[0].salon_id })
+
+    await bot.sendMessage(
+      chatId,
+      `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 👋\nВи є адміном закладу ${getSalon[0].name}`,
+    )
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin(!!tgChangeByRole.length))
   }
 
   const isCustomerByTgID = await botRepository.getCustomerByID({ user_tg_id: id })
 
   if (isCustomerByTgID.length) {
-    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''}`)
+    await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 👋`)
     return bot.sendMessage(
       chatId,
       'Оберіть дію:',
