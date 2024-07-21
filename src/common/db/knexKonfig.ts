@@ -1,6 +1,6 @@
 import knex, { Knex } from 'knex'
 
-const { DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD, DATABASE_URL } = process.env
+const { DATABASE_URL } = process.env
 
 export const getKnexConfig = () => ({
   client: 'pg',
