@@ -22,7 +22,12 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     const salon = await botRepository.getSalonByID({ id: customer[0].salon_id })
 
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
-    await bot.sendMessage(chatId, 'Послуги закладу ' + salon[0].name)
+    await bot.sendMessage(chatId, 'Розклад та послуги закладу ' + salon[0].name)
+    await bot.sendMessage(
+      chatId,
+      `Робочі години: ${moment(salon[0].work_hour_from, 'HH:mm:ss').format('HH:mm')} - ${moment(salon[0].work_hour_to, 'HH:mm:ss').format('HH:mm')}`,
+    )
+    await bot.sendMessage(chatId, 'Адреса: ' + salon[0].address)
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
     return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
   }
@@ -483,5 +488,59 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
       chatId,
       'Ви впевнені, що хочете видалити цю послугу? Введіть "так" для підтвердження або "ні" для скасування.',
     )
+  }
+
+  if (data === '16') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const monthlyCustomerCount = await botRepository.getMonthlyCustomerCount(admin[0].salon_id)
+
+    if (!+monthlyCustomerCount[0].total_customers) {
+      return await bot.sendMessage(chatId, 'Записи за попередній період відсутні')
+    }
+
+    return await bot.sendMessage(
+      chatId,
+      `Загальна кількість клієнтів за період з ${monthlyCustomerCount[0].start_date} до ${monthlyCustomerCount[0].end_date} складає: ${monthlyCustomerCount[0].total_customers}`,
+    )
+  }
+
+  if (data === '17') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const getMonthlyRevenue = await botRepository.getMonthlyRevenue(admin[0].salon_id)
+
+    if (!+getMonthlyRevenue[0].total_revenue) {
+      return await bot.sendMessage(chatId, 'Дохід за попередній період відсутній')
+    }
+
+    return await bot.sendMessage(
+      chatId,
+      `Загальний дохід за період з ${getMonthlyRevenue[0].start_date} до ${getMonthlyRevenue[0].end_date} складає: ${+getMonthlyRevenue[0].total_revenue} грн`,
+    )
+  }
+
+  if (data === '18') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const getMonthlyEmployeeCustomerCount = await botRepository.getMonthlyEmployeeCustomerCount(admin[0].salon_id)
+
+    if (!getMonthlyEmployeeCustomerCount.customerCount.length) {
+      return await bot.sendMessage(chatId, 'Клієнти за попередній період відсутні')
+    }
+
+    const message = `Кількість клієнтів за період з ${getMonthlyEmployeeCustomerCount.startDate} до ${getMonthlyEmployeeCustomerCount.endDate} складає:\n${getMonthlyEmployeeCustomerCount.customerCount.map((item) => `${item.employee_name} - ${+item.total_customers}`).join('\n')}`
+
+    return await bot.sendMessage(chatId, message)
+  }
+
+  if (data === '19') {
+    const admin = await botRepository.getAdminByID({ user_tg_id: id })
+    const getPopularServices = await botRepository.getPopularServices(admin[0].salon_id)
+
+    if (!getPopularServices.serviceCount.length) {
+      return await bot.sendMessage(chatId, 'Послуги за попередній період відсутні')
+    }
+
+    const message = `Найпопулярніші послуги:\n${getPopularServices.serviceCount.map((item) => `${item.service_name} - ${item.total_usages} разів`).join('\n')}`
+
+    return await bot.sendMessage(chatId, message)
   }
 }

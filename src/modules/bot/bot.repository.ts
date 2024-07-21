@@ -231,6 +231,106 @@ const getDealsRemember = async (): Promise<Array<TDeal>> => {
     .returning('*')
 }
 
+const getMonthlyCustomerCount = async (
+  salon_id: number,
+): Promise<Array<{ start_date: string; end_date: string; total_customers: string }>> => {
+  const currentDate = moment().tz('Europe/Kiev')
+
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
+  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+
+  return db
+    .select(
+      db.raw(`? as start_date`, [moment(startDate).format('DD-MM-YYYY')]),
+      db.raw(`? as end_date`, [moment(endDate).format('DD-MM-YYYY')]),
+    )
+    .from('deals')
+    .count('customer_id as total_customers')
+    .where({ salon_id })
+    .andWhere('calendar_time', '>=', startDate)
+    .andWhere('calendar_time', '<=', endDate)
+}
+
+const getMonthlyRevenue = async (
+  salon_id: number,
+): Promise<Array<{ start_date: string; end_date: string; total_revenue: string }>> => {
+  const currentDate = moment().tz('Europe/Kiev')
+
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
+  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+
+  return db
+    .select(
+      db.raw(`? as start_date`, [moment(startDate).format('DD-MM-YYYY')]),
+      db.raw(`? as end_date`, [moment(endDate).format('DD-MM-YYYY')]),
+    )
+    .sum('services.price as total_revenue')
+    .from('deals')
+    .join('services', 'deals.service_id', '=', 'services.id')
+    .where('deals.salon_id', salon_id)
+    .andWhere('deals.calendar_time', '>=', startDate)
+    .andWhere('deals.calendar_time', '<=', endDate)
+}
+
+const getMonthlyEmployeeCustomerCount = async (
+  salon_id: number,
+): Promise<{
+  startDate: string
+  endDate: string
+  customerCount: Array<{ employee_name: string; total_customers: string }>
+}> => {
+  const currentDate = moment().tz('Europe/Kiev')
+
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
+  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+
+  const customerCount: Array<{ employee_name: string; total_customers: string }> = await db()
+    .select('employees.first_name as employee_name')
+    .from('deals')
+    .count('customer_id as total_customers')
+    .join('employees', 'deals.employee_id', 'employees.id')
+    .where('deals.salon_id', salon_id)
+    .andWhere('calendar_time', '>=', startDate)
+    .andWhere('calendar_time', '<=', endDate)
+    .groupBy('employees.id', 'employees.first_name')
+
+  return {
+    startDate: moment(startDate).format('DD-MM-YYYY'),
+    endDate: moment(endDate).format('DD-MM-YYYY'),
+    customerCount,
+  }
+}
+
+const getPopularServices = async (
+  salon_id: number,
+): Promise<{
+  startDate: string
+  endDate: string
+  serviceCount: Array<{ service_name: string; total_usages: string }>
+}> => {
+  const currentDate = moment().tz('Europe/Kiev')
+
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
+  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+
+  const serviceCount = await db('deals')
+    .select('services.name as service_name')
+    .count('deals.service_id as total_usages')
+    .join('services', 'deals.service_id', 'services.id')
+    .where('deals.salon_id', salon_id)
+    .andWhere('calendar_time', '>=', startDate)
+    .andWhere('calendar_time', '<=', endDate)
+    .groupBy('services.name')
+    .orderBy('total_usages', 'desc')
+    .limit(10)
+
+  return {
+    startDate: moment(startDate).format('DD-MM-YYYY'),
+    endDate: moment(endDate).format('DD-MM-YYYY'),
+    serviceCount,
+  }
+}
+
 export const botRepository = {
   getCustomerByID,
   getAdminByID,
@@ -258,4 +358,8 @@ export const botRepository = {
   deleteDeal,
   deleteEmployee,
   deleteService,
+  getMonthlyCustomerCount,
+  getMonthlyRevenue,
+  getMonthlyEmployeeCustomerCount,
+  getPopularServices,
 }

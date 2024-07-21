@@ -29,7 +29,7 @@ export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration:
 export const optionsOfCustomer = (salon_id: number, changeRole?: boolean) => ({
   reply_markup: {
     inline_keyboard: [
-      [{ text: salon_id ? 'Дізнатися інформацію про послуги закладу' : '', callback_data: '1' }],
+      [{ text: salon_id ? 'Дізнатися інформацію про розклад та послуги закладу' : '', callback_data: '1' }],
       [{ text: salon_id ? 'Замовити зворотній дзвінок' : '', callback_data: '2', request_contact: true }],
       [{ text: 'Записатися онлайн до фахівця закладу', callback_data: '3' }],
       [{ text: 'Мої записи', callback_data: '9' }],
@@ -58,6 +58,10 @@ export const optionsOfAdmin = (changeRole?: boolean) => ({
       [{ text: 'Додати нового співробітника', callback_data: '7' }],
       [{ text: 'Редагувати співробітника', callback_data: '12' }],
       [{ text: 'Видалити співробітника', callback_data: '13' }],
+      [{ text: 'Звіт по відвідуваності за місяць', callback_data: '16' }],
+      [{ text: 'Фінансовий звіт за місяць', callback_data: '17' }],
+      [{ text: 'Аналіз ефективності персоналу за місяць', callback_data: '18' }],
+      [{ text: 'Звіт по послугах за місяць', callback_data: '19' }],
       [{ text: changeRole ? 'Change role' : '', callback_data: '11' }],
     ],
     resize_keyboard: true,
