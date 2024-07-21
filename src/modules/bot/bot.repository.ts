@@ -236,8 +236,8 @@ const getMonthlyCustomerCount = async (
 ): Promise<Array<{ start_date: string; end_date: string; total_customers: string }>> => {
   const currentDate = moment().tz('Europe/Kiev')
 
-  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
-  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD HH:mm:ss')
+  const endDate = currentDate.clone().subtract(1, 'months').endOf('month').format('YYYY-MM-DD HH:mm:ss')
 
   return db
     .select(
@@ -256,8 +256,8 @@ const getMonthlyRevenue = async (
 ): Promise<Array<{ start_date: string; end_date: string; total_revenue: string }>> => {
   const currentDate = moment().tz('Europe/Kiev')
 
-  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
-  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD HH:mm:ss')
+  const endDate = currentDate.clone().subtract(1, 'months').endOf('month').format('YYYY-MM-DD HH:mm:ss')
 
   return db
     .select(
@@ -281,8 +281,8 @@ const getMonthlyEmployeeCustomerCount = async (
 }> => {
   const currentDate = moment().tz('Europe/Kiev')
 
-  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
-  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD HH:mm:ss')
+  const endDate = currentDate.clone().subtract(1, 'months').endOf('month').format('YYYY-MM-DD HH:mm:ss')
 
   const customerCount: Array<{ employee_name: string; total_customers: string }> = await db()
     .select('employees.first_name as employee_name')
@@ -310,8 +310,8 @@ const getPopularServices = async (
 }> => {
   const currentDate = moment().tz('Europe/Kiev')
 
-  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD')
-  const endDate = currentDate.clone().startOf('month').subtract(1, 'days').format('YYYY-MM-DD')
+  const startDate = currentDate.clone().subtract(1, 'months').startOf('month').format('YYYY-MM-DD HH:mm:ss')
+  const endDate = currentDate.clone().subtract(1, 'months').endOf('month').format('YYYY-MM-DD HH:mm:ss')
 
   const serviceCount = await db('deals')
     .select('services.name as service_name')
