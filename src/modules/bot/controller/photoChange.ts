@@ -55,7 +55,7 @@ export const photoChangeBot = async (msg: Message) => {
     }
     return bot.sendMessage(
       msg.chat.id,
-      'Оберіть дію:',
+      'Оберіть дію',
       optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
     )
   } catch (error) {

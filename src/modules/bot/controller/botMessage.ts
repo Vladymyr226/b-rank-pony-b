@@ -243,12 +243,12 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await botRepository.insertService(userState as TService)
           delete userStates[chatId]
           await bot.sendMessage(chatId, 'Дані послуги збережені. Дякуємо!')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } catch (e) {
           log.error(e)
           delete userStates[chatId]
           await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         }
       case 'comment':
         const {
@@ -270,10 +270,16 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
             notes: text,
             calendar_time,
           })
-          await bot.sendMessage(chatId, 'Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse + ' ✅')
+          const service = await botRepository.getServiceByID({ id: serviceId })
+          const employee = await botRepository.getEmployeesByID({ id: employee_id })
           await bot.sendMessage(
             chatId,
-            'Оберіть дію:',
+            `Ви успішно здійснили запис до фахівця *${employee[0].first_name}* \nна послугу *${service[0].name}* ${calendarTimeResponse} ✅`,
+            { parse_mode: 'Markdown' },
+          )
+          await bot.sendMessage(
+            chatId,
+            'Оберіть дію',
             optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
           )
           return delete userStates[chatId]
@@ -282,7 +288,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
           await bot.sendMessage(
             chatId,
-            'Оберіть дію:',
+            'Оберіть дію',
             optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
           )
           return delete userStates[chatId]
@@ -292,11 +298,11 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await botRepository.deleteEmployee(userState.employee_id)
           await bot.sendMessage(chatId, 'Співробітника видалено успішно.')
           delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          await bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } else if (text.toLowerCase() === 'ні') {
           await bot.sendMessage(chatId, 'Видалення співробітника скасовано.')
           delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          await bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } else {
           await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
         }
@@ -306,11 +312,11 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await botRepository.deleteService(userState.service_id)
           await bot.sendMessage(chatId, 'Послугу видалено успішно.')
           delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          await bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } else if (text.toLowerCase() === 'ні') {
           await bot.sendMessage(chatId, 'Видалення послуги скасовано.')
           delete userStates[chatId]
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          await bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } else {
           await bot.sendMessage(chatId, 'Будь ласка, введіть "так" або "ні".')
         }
@@ -350,12 +356,12 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           await botRepository.insertEmployeesServices({ employee_id: employee[0].id, service_id })
           delete userStates[chatId]
           await bot.sendMessage(chatId, 'Дані співробітника збережено. Дякуємо!')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         } catch (e) {
           log.error(e)
           delete userStates[chatId]
           await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-          return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+          return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
         }
     }
   }
@@ -370,12 +376,12 @@ const updateEmployee = async (userState, chatId: number) => {
     await botRepository.putEmployee(id, userState)
     delete userStates[chatId]
     await bot.sendMessage(chatId, 'Дані співробітника збережено. Дякуємо!')
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+    return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
   } catch (e) {
     log.error(e)
     delete userStates[chatId]
     await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+    return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
   }
 }
 
@@ -388,11 +394,11 @@ const updateService = async (userState, chatId: number) => {
     await botRepository.putService(id, userState)
     delete userStates[chatId]
     await bot.sendMessage(chatId, 'Дані послуги збережено. Дякуємо!')
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+    return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
   } catch (e) {
     log.error(e)
     delete userStates[chatId]
     await bot.sendMessage(chatId, 'Виникла помилка. Спробуйте знову.')
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+    return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
   }
 }

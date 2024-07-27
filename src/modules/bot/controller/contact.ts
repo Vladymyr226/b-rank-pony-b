@@ -22,7 +22,7 @@ export const contactTelBot = async (msg: Message) => {
   await bot.sendMessage(msg.chat.id, `Добре, очікуйте, майстер з вами зв'яжеться найближчим часом!`)
   return await bot.sendMessage(
     msg.chat.id,
-    'Оберіть дію:',
+    'Оберіть дію',
     optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
   )
 }
