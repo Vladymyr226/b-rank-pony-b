@@ -270,7 +270,7 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
             notes: text,
             calendar_time,
           })
-          await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+          await bot.sendMessage(chatId, 'Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse + ' ✅')
           await bot.sendMessage(
             chatId,
             'Оберіть дію:',

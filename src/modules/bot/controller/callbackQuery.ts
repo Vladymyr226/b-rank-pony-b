@@ -182,7 +182,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     const employee_id = +data.split('_')[1]
     const service = await botRepository.getServicesByEmployeeID(employee_id)
 
-    return bot.sendMessage(chatId, 'Оберіть послугу:', {
+    return bot.sendMessage(chatId, 'Оберіть послугу', {
       reply_markup: {
         inline_keyboard: service.map((item) => [
           { text: item.name, callback_data: `service_${item.id}_${employee_id}` },
@@ -237,7 +237,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
         calendarTimeResponse,
       }
 
-      return bot.sendMessage(chatId, 'Чи треба додати коментар?', {
+      return bot.sendMessage(chatId, 'Треба додати коментар?', {
         reply_markup: {
           inline_keyboard: [
             [{ text: 'Так', callback_data: `comment_1` }],
@@ -266,7 +266,15 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
           customer_id,
           calendar_time,
         })
-        await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
+        const service = await botRepository.getServiceByID({ id: service_id })
+        const employee = await botRepository.getEmployeesByID({ id: employee_id })
+
+        await bot.sendMessage(
+          chatId,
+          `Ви успішно здійснили запис до фахівця *${employee[0].first_name}* на послугу *${service[0].name}* ${calendarTimeResponse} ✅`,
+          { parse_mode: 'Markdown' },
+        )
+
         await bot.sendMessage(
           chatId,
           'Оберіть дію:',
