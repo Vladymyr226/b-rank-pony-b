@@ -43,6 +43,8 @@ export const photoChangeBot = async (msg: Message) => {
       },
     )
 
+    log.info('Running replicate,', 'user_tg_id =', msg.from.id, 'photoUrl:', photoUrl)
+
     for (const outputElement of Object.values(output)) {
       await bot.sendPhoto(chatId, outputElement)
     }

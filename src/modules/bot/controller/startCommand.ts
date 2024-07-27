@@ -21,7 +21,7 @@ export const startCommandBot = async (msg: Message) => {
       chatId,
       `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 👋\nВи є адміном закладу ${getSalon[0].name}`,
     )
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin(!!tgChangeByRole.length))
+    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin({ changeRole: !!tgChangeByRole.length }))
   }
 
   const isCustomerByTgID = await botRepository.getCustomerByID({ user_tg_id: id })
@@ -31,7 +31,10 @@ export const startCommandBot = async (msg: Message) => {
     return bot.sendMessage(
       chatId,
       'Оберіть дію:',
-      optionsOfCustomer(isCustomerByTgID[0].salon_id, !!tgChangeByRole.length),
+      optionsOfCustomer(isCustomerByTgID[0].salon_id, {
+        replicate_enable: isCustomerByTgID[0].replicate_enable,
+        changeRole: !!tgChangeByRole.length,
+      }),
     )
   }
 
@@ -48,5 +51,9 @@ export const startCommandBot = async (msg: Message) => {
   }
 
   await bot.sendMessage(chatId, `Вітаємо, ${first_name} ${last_name !== undefined ? last_name : ''} 🎉`)
-  return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
+  return bot.sendMessage(
+    chatId,
+    'Оберіть дію:',
+    optionsOfCustomer(customer[0].salon_id, { replicate_enable: customer[0].replicate_enable }),
+  )
 }

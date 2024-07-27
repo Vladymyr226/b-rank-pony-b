@@ -26,7 +26,10 @@ export const tgCalendar = (bot: TelegramBot, from: string, to: string, duration:
   return calendar
 }
 
-export const optionsOfCustomer = (salon_id: number, changeRole?: boolean) => ({
+export const optionsOfCustomer = (
+  salon_id: number,
+  options?: { replicate_enable?: boolean; changeRole?: boolean },
+) => ({
   reply_markup: {
     inline_keyboard: [
       [{ text: salon_id ? 'Дізнатися інформацію про розклад та послуги закладу' : '', callback_data: '1' }],
@@ -35,18 +38,18 @@ export const optionsOfCustomer = (salon_id: number, changeRole?: boolean) => ({
       [{ text: 'Мої записи', callback_data: '9' }],
       [
         {
-          text: 'Згенерувати стильну зачіску за моїм фото',
+          text: options?.replicate_enable ? 'Згенерувати стильну зачіску за моїм фото' : '',
           callback_data: '4',
         },
       ],
-      [{ text: changeRole ? 'Change role' : '', callback_data: '11' }],
+      [{ text: options?.changeRole ? 'Change role' : '', callback_data: '11' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,
   },
 })
 
-export const optionsOfAdmin = (changeRole?: boolean) => ({
+export const optionsOfAdmin = (options?: { changeRole?: boolean }) => ({
   reply_markup: {
     inline_keyboard: [
       [{ text: 'Записи закладу', callback_data: '10' }],
@@ -62,7 +65,7 @@ export const optionsOfAdmin = (changeRole?: boolean) => ({
       [{ text: 'Фінансовий звіт за місяць', callback_data: '17' }],
       [{ text: 'Аналіз ефективності персоналу за місяць', callback_data: '18' }],
       [{ text: 'Звіт по послугах за місяць', callback_data: '19' }],
-      [{ text: changeRole ? 'Change role' : '', callback_data: '11' }],
+      [{ text: options?.changeRole ? 'Change role' : '', callback_data: '11' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,

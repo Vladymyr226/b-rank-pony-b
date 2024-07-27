@@ -1,11 +1,14 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config()
 
-const { PG_CONNECTION_STRING } = process.env
+const { DATABASE_URL } = process.env
 
 const config = {
   client: 'postgresql',
-  connection: PG_CONNECTION_STRING,
+  connection: {
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  },
   pool: {
     min: 2,
     max: 10,
