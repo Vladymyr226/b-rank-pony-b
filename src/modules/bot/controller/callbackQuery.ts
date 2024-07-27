@@ -22,18 +22,18 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     const salon = await botRepository.getSalonByID({ id: customer[0].salon_id })
 
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
-    await bot.sendMessage(chatId, 'Розклад та послуги закладу ' + salon[0].name)
+    await bot.sendMessage(chatId, 'Розклад та послуги закладуℹ️🕐 ' + salon[0].name)
     await bot.sendMessage(
       chatId,
-      `Робочі години: ${moment(salon[0].work_hour_from, 'HH:mm:ss').format('HH:mm')} - ${moment(salon[0].work_hour_to, 'HH:mm:ss').format('HH:mm')}`,
+      `Робочі години🕐 ${moment(salon[0].work_hour_from, 'HH:mm:ss').format('HH:mm')} - ${moment(salon[0].work_hour_to, 'HH:mm:ss').format('HH:mm')}`,
     )
     const getReplicateEnable = await botRepository.getReplicateEnable(customer[0].id)
 
-    await bot.sendMessage(chatId, 'Адреса: ' + salon[0].address)
+    await bot.sendMessage(chatId, 'Адреса📍' + salon[0].address)
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
     return bot.sendMessage(
       chatId,
-      'Оберіть дію:',
+      'Оберіть дію',
       optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
     )
   }
@@ -98,7 +98,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
     const messages = services.map(botService.formatServiceInfo).join('\n\n')
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+    return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
   }
 
   if (data === '6') {
@@ -271,13 +271,13 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
         await bot.sendMessage(
           chatId,
-          `Ви успішно здійснили запис до фахівця *${employee[0].first_name}* на послугу *${service[0].name}* ${calendarTimeResponse} ✅`,
+          `Ви успішно здійснили запис до фахівця *${employee[0].first_name}* \nна послугу *${service[0].name}* ${calendarTimeResponse} ✅`,
           { parse_mode: 'Markdown' },
         )
 
         await bot.sendMessage(
           chatId,
-          'Оберіть дію:',
+          'Оберіть дію',
           optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
         )
         return delete userStates[chatId]
@@ -286,7 +286,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
         await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
         await bot.sendMessage(
           chatId,
-          'Оберіть дію:',
+          'Оберіть дію',
           optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
         )
         return delete userStates[chatId]
@@ -307,7 +307,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
       const messages = services.map(botService.formatEmployeeInfo).join('\n\n')
       await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+      return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
     } catch (err) {
       log.error(err)
     }
@@ -337,7 +337,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
       return bot.sendMessage(
         chatId,
-        'Оберіть дію:',
+        'Оберіть дію',
         optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
       )
     } catch (err) {
@@ -377,7 +377,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
         })
       }
 
-      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfAdmin())
+      return bot.sendMessage(chatId, 'Оберіть дію', optionsOfAdmin())
     } catch (err) {
       log.error(err)
     }
