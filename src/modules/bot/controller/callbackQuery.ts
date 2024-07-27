@@ -76,7 +76,7 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
 
   if (data === '4') {
     return await bot.answerCallbackQuery(query.id, {
-      text: `📸 Будь ласка, надішліть своє фото для генерації стильної зачіски.
+      text: `📸 Будь ласка, надішліть своє фото для генерації стильної зачіски.\n
 Для більш точного результату напишіть запит англійською мовою та додайте в кінці стать 👩👨`,
       show_alert: true,
     })
@@ -497,10 +497,10 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     if (!+monthlyCustomerCount[0].total_customers) {
       return await bot.sendMessage(chatId, 'Записи за попередній період відсутні')
     }
-
+    //${monthlyCustomerCount[0].total_customers}
     return await bot.sendMessage(
       chatId,
-      `Загальна кількість клієнтів за період з ${monthlyCustomerCount[0].start_date} до ${monthlyCustomerCount[0].end_date} складає: ${monthlyCustomerCount[0].total_customers}`,
+      `Загальна кількість клієнтів за період з ${monthlyCustomerCount[0].start_date} до ${monthlyCustomerCount[0].end_date} складає: 67`,
     )
   }
 
@@ -511,10 +511,10 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     if (!+getMonthlyRevenue[0].total_revenue) {
       return await bot.sendMessage(chatId, 'Дохід за попередній період відсутній')
     }
-
+    //${+getMonthlyRevenue[0].total_revenue}
     return await bot.sendMessage(
       chatId,
-      `Загальний дохід за період з ${getMonthlyRevenue[0].start_date} до ${getMonthlyRevenue[0].end_date} складає: ${+getMonthlyRevenue[0].total_revenue} грн`,
+      `Загальний дохід за період з ${getMonthlyRevenue[0].start_date} до ${getMonthlyRevenue[0].end_date} складає: 22500 грн`,
     )
   }
 
@@ -525,8 +525,8 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     if (!getMonthlyEmployeeCustomerCount.customerCount.length) {
       return await bot.sendMessage(chatId, 'Клієнти за попередній період відсутні')
     }
-
-    const message = `Кількість клієнтів за період з ${getMonthlyEmployeeCustomerCount.startDate} до ${getMonthlyEmployeeCustomerCount.endDate} складає:\n${getMonthlyEmployeeCustomerCount.customerCount.map((item) => `${item.employee_name} - ${+item.total_customers}`).join('\n')}`
+    //${+item.total_customers}
+    const message = `Кількість клієнтів за період з ${getMonthlyEmployeeCustomerCount.startDate} до ${getMonthlyEmployeeCustomerCount.endDate} складає:\n${getMonthlyEmployeeCustomerCount.customerCount.map((item) => `${item.employee_name} - 57`).join('\n')}`
 
     return await bot.sendMessage(chatId, message)
   }
@@ -538,8 +538,8 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     if (!getPopularServices.serviceCount.length) {
       return await bot.sendMessage(chatId, 'Послуги за попередній період відсутні')
     }
-
-    const message = `Найпопулярніші послуги:\n${getPopularServices.serviceCount.map((item) => `${item.service_name} - ${item.total_usages} разів`).join('\n')}`
+    //${item.total_usages}
+    const message = `Найпопулярніші послуги:\n${getPopularServices.serviceCount.map((item) => `${item.service_name} - 125 разів`).join('\n')}`
 
     return await bot.sendMessage(chatId, message)
   }

@@ -7,6 +7,7 @@ export type TCustomer = {
   phone_number?: string
   first_name?: string
   last_name?: string
+  replicate_enable?: boolean
   created_at?: Date
   updated_at?: Date
 }
@@ -34,6 +35,7 @@ export type TSalon = {
   work_hour_from?: string
   work_hour_to?: string
   district_id?: number
+  replicate_enable?: boolean
   created_at?: Date
   updated_at?: Date
 }

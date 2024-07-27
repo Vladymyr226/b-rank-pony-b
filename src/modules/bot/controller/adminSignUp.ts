@@ -3,6 +3,7 @@ import { botRepository } from '../bot.repository'
 import { optionsOfAdmin } from '../bot.config'
 import { getLogger } from '../../../common/logging'
 import getBotInstance from '../../common/bot'
+import { TAdmin } from '../bot.types'
 
 const log = getLogger()
 const bot = getBotInstance()
@@ -28,14 +29,25 @@ export const adminSignUp = async (msg: Message, match: RegExpExecArray | null) =
     return bot.sendMessage(chatId, 'Нажаль, заклад не знайдено')
   }
 
-  const admin = await botRepository.insertAdmin({
-    user_tg_id: id,
-    salon_id,
-    username,
-    first_name,
-    last_name,
-    chat_id: chatId,
-  })
+  let admin: Array<TAdmin> = null
+
+  try {
+    admin = await botRepository.insertAdmin({
+      user_tg_id: id,
+      salon_id,
+      username,
+      first_name,
+      last_name,
+      chat_id: chatId,
+    })
+  } catch (error) {
+    if (error instanceof Error && (error as any).code === '23505') {
+      log.error('Duplicate key value violates unique constraint:', 'admin_id =', id, (error as any).detail)
+      return bot.sendMessage(chatId, 'Адмін для такого закладу вже існує')
+    } else {
+      return log.error('Database error:', error)
+    }
+  }
 
   if (!admin.length) {
     log.error(admin)
