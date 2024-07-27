@@ -27,9 +27,15 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
       chatId,
       `Робочі години: ${moment(salon[0].work_hour_from, 'HH:mm:ss').format('HH:mm')} - ${moment(salon[0].work_hour_to, 'HH:mm:ss').format('HH:mm')}`,
     )
+    const getReplicateEnable = await botRepository.getReplicateEnable(customer[0].id)
+
     await bot.sendMessage(chatId, 'Адреса: ' + salon[0].address)
     await bot.sendMessage(chatId, messages, { parse_mode: 'Markdown' })
-    return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
+    return bot.sendMessage(
+      chatId,
+      'Оберіть дію:',
+      optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
+    )
   }
 
   if (data === '2') {
@@ -250,6 +256,8 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
     const { calendar_time, calendarTimeResponse } = userStates[chatId] || {}
 
     if (comment_id === 2) {
+      const getReplicateEnable = await botRepository.getReplicateEnable(customer_id)
+
       try {
         await botRepository.insertDeal({
           salon_id,
@@ -259,12 +267,20 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
           calendar_time,
         })
         await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
-        await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+        await bot.sendMessage(
+          chatId,
+          'Оберіть дію:',
+          optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
+        )
         return delete userStates[chatId]
       } catch (error) {
         log.error(error)
         await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
-        await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+        await bot.sendMessage(
+          chatId,
+          'Оберіть дію:',
+          optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
+        )
         return delete userStates[chatId]
       }
     }
@@ -298,6 +314,8 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
         return await bot.sendMessage(chatId, 'Записи відсутні')
       }
 
+      const getReplicateEnable = await botRepository.getReplicateEnable(customer[0].id)
+
       for (const deal of deals) {
         const formattedDeal = botService.formatDealsInfo(deal)
         await bot.sendMessage(chatId, formattedDeal.text, {
@@ -309,7 +327,11 @@ export const callbackQueryBot = async (query: CallbackQuery) => {
         })
       }
 
-      return bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer[0].salon_id))
+      return bot.sendMessage(
+        chatId,
+        'Оберіть дію:',
+        optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
+      )
     } catch (err) {
       log.error(err)
     }

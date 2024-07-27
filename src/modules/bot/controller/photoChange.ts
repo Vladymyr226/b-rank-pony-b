@@ -3,6 +3,7 @@ import { optionsOfCustomer } from '../bot.config'
 import getBotInstance from '../../common/bot'
 import getReplicateAIInstance from '../../common/ai'
 import { getLogger } from '../../../common/logging'
+import { botRepository } from '../bot.repository'
 
 const log = getLogger()
 const bot = getBotInstance()
@@ -10,6 +11,9 @@ const replicate = getReplicateAIInstance()
 
 export const photoChangeBot = async (msg: Message) => {
   const chatId = msg.chat.id
+  const { id } = msg.from
+  const customer = await botRepository.getCustomerByID({ user_tg_id: id })
+
   await bot.sendMessage(chatId, 'Обробка фото займе декілька секунд...')
 
   const photoId = msg.photo[msg.photo.length - 1].file_id
@@ -44,11 +48,16 @@ export const photoChangeBot = async (msg: Message) => {
     )
 
     log.info('Running replicate,', 'user_tg_id =', msg.from.id, 'photoUrl:', photoUrl)
+    const getReplicateEnable = await botRepository.getReplicateEnable(customer[0].id)
 
     for (const outputElement of Object.values(output)) {
       await bot.sendPhoto(chatId, outputElement)
     }
-    return bot.sendMessage(msg.chat.id, 'Оберіть дію:', optionsOfCustomer(1))
+    return bot.sendMessage(
+      msg.chat.id,
+      'Оберіть дію:',
+      optionsOfCustomer(customer[0].salon_id, { replicate_enable: !!getReplicateEnable.length }),
+    )
   } catch (error) {
     log.error('Error:', error)
     return bot.sendMessage(chatId, 'Під час обробки запиту сталася помилка. Спробуйте ще раз.')

@@ -259,6 +259,8 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
           calendar_time,
           calendarTimeResponse,
         } = userStates[chatId] || {}
+        const getReplicateEnable = await botRepository.getReplicateEnable(customer_id)
+
         try {
           await botRepository.insertDeal({
             salon_id,
@@ -269,12 +271,20 @@ export const botMessage = async (msg: Message, metaData: Metadata) => {
             calendar_time,
           })
           await bot.sendMessage(chatId, '✅ Ви успішно здійснили запис до фахівця: ' + calendarTimeResponse)
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+          await bot.sendMessage(
+            chatId,
+            'Оберіть дію:',
+            optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
+          )
           return delete userStates[chatId]
         } catch (error) {
           log.error(error)
           await bot.sendMessage(chatId, '❌ Сталася помилка при збереженні запису. Будь ласка, спробуйте ще раз.')
-          await bot.sendMessage(chatId, 'Оберіть дію:', optionsOfCustomer(customer_id))
+          await bot.sendMessage(
+            chatId,
+            'Оберіть дію:',
+            optionsOfCustomer(salon_id, { replicate_enable: !!getReplicateEnable.length }),
+          )
           return delete userStates[chatId]
         }
       case 'confirm_delete_employee':
