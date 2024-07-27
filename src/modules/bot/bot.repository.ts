@@ -331,6 +331,15 @@ const getPopularServices = async (
   }
 }
 
+const getReplicateEnable = async (id: number): Promise<Array<{ id: number }>> => {
+  return db('salon')
+    .select('salon.id', 'customers.id')
+    .join('customers', 'salon.id', '=', 'customers.salon_id') // Замените на соответствующие поля для связи
+    .where('salon.replicate_enable', true)
+    .andWhere('customers.replicate_enable', true)
+    .andWhere('customers.id', id)
+}
+
 export const botRepository = {
   getCustomerByID,
   getAdminByID,
@@ -362,4 +371,5 @@ export const botRepository = {
   getMonthlyRevenue,
   getMonthlyEmployeeCustomerCount,
   getPopularServices,
+  getReplicateEnable,
 }
