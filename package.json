@@ -1,9 +1,7 @@
 {
   "name": "pony",
   "version": "1.5.2",
-  "engines": {
-    "node": "22.x"
-  },
+ "engines": { "node": "20.x" }
   "description": "",
   "main": "main.js",
   "scripts": {
