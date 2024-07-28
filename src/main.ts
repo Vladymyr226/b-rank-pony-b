@@ -10,6 +10,7 @@ import getBotInstance from './modules/common/bot'
 import { botCommands } from './modules/bot/bot.commands'
 import { runMigrations } from './common/db/migrations'
 import cronJobs from './modules/common/cron/'
+import { createSalonRouter } from './modules/salon/salon.routes'
 
 getBotInstance()
 botCommands()
@@ -20,16 +21,21 @@ const app = express()
 const log = getLogger()
 log.info('Starting application')
 
+app.use(
+  cors({
+    origin: process.env.ORIGIN_URL,
+  }),
+)
 app.use(express.json())
-app.use(cors())
-app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
 
 async function addApiRoutes() {
   if (+AUTO_MIGRATION) await runMigrations()
   if (+CRON_JOB_STOP) cronJobs.stop()
 
   const router = Router({ mergeParams: true })
+  router.use('/register', createSalonRouter())
 
   return router
 }
@@ -41,7 +47,7 @@ async function addApiRoutes() {
 
 configureHealthCheckRouter(app)
 
-app.use(errorHandlerMiddleware)
+// app.use(errorHandlerMiddleware)
 
 let port = parseInt(PORT, 10)
 
