@@ -10,11 +10,12 @@ export const registrationHandler = async (req: Request, res: Response) => {
   const order = await salonRepository.insertOrder(req.body)
 
   if (order.length) {
-    await bot.sendMessage(
-      '-4225519854',
-      `New order: 
+    process.env.ENVIRONMENT !== 'dev' &&
+      (await bot.sendMessage(
+        '-4225519854',
+        `New order: 
 id: ${order[0].id}`,
-    )
+      ))
 
     log.info(`New order: id: ${order[0].id}`)
 
