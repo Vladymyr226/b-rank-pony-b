@@ -1,14 +1,12 @@
-import Replicate from 'replicate'
+import OpenAI from 'openai'
 
-let replicate: Replicate = null
+let openai: OpenAI = null
 
-const getReplicateAIInstance = () => {
-  if (!replicate) {
-    replicate = new Replicate({
-      auth: process.env.REPLICATE_API_TOKEN,
-    })
+const getOpenAIInstance = () => {
+  if (!openai) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_KEY })
   }
-  return replicate
+  return openai
 }
 
-export default getReplicateAIInstance
+export default getOpenAIInstance

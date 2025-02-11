@@ -1,13 +1,18 @@
 import { Message } from 'node-telegram-bot-api'
 import { optionsOfCustomer } from '../bot.config'
 import getBotInstance from '../../common/bot'
-import getReplicateAIInstance from '../../common/ai'
+import getOpenAIInstance from '../../common/ai'
 import { getLogger } from '../../../common/logging'
 import { botRepository } from '../bot.repository'
+import axios from 'axios'
+import fs from 'fs'
+import path from 'path'
+import sharp from 'sharp'
+import { PassThrough, Readable } from 'node:stream'
 
 const log = getLogger()
 const bot = getBotInstance()
-const replicate = getReplicateAIInstance()
+const openai = getOpenAIInstance()
 
 export const photoChangeBot = async (msg: Message) => {
   const chatId = msg.chat.id
@@ -23,36 +28,35 @@ export const photoChangeBot = async (msg: Message) => {
   const prompt = msg.caption || 'show a modern hairstyle, highly detailed, realistic, trendy, fashionable, high quality'
 
   try {
-    const output = await replicate.run(
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      process.env.REPLICATE_HASH_MODEL,
-      {
-        input: {
-          image: photoUrl,
-          width: 1080,
-          height: 1920,
-          prompt,
-          refine: 'expert_ensemble_refiner',
-          scheduler: 'K_EULER',
-          lora_scale: 0.6,
-          num_outputs: 4,
-          guidance_scale: 10,
-          apply_watermark: false,
-          high_noise_frac: 0.8,
-          negative_prompt: 'age and gender are different',
-          prompt_strength: 0.9,
-          num_inference_steps: 50,
-        },
-      },
-    )
+    const response = await axios.get(photoUrl, { responseType: 'arraybuffer' })
+    // Сохраняем временный файл
+    // Преобразуем изображение в PNG с помощью sharp и сохраняем временный файл
+    const tempFilePath = path.join(__dirname, 'temp_image.png')
+    await sharp(response.data)
+      .ensureAlpha()
+      .png() // Конвертируем в PNG
+      .toFile(tempFilePath) // Сохраняем файлУказываем конец потока
 
+    // console.log(buffer)
+    console.log(`Размер изображения: ${Buffer.byteLength(response.data)} байт`)
+
+    const output = await openai.images.edit({
+      model: 'dall-e-2',
+      image: fs.createReadStream(tempFilePath),
+      prompt,
+      n: 2,
+      size: '1024x1024',
+    })
+    // Удаляем временный файл
+    fs.unlinkSync(tempFilePath)
     log.info('Running replicate,', 'user_tg_id =', msg.from.id, 'photoUrl:', photoUrl)
     const getReplicateEnable = await botRepository.getReplicateEnable(customer[0].id)
 
-    for (const outputElement of Object.values(output)) {
-      await bot.sendPhoto(chatId, outputElement)
-    }
+    // for (const outputElement of Object.values(output)) {
+    //   await bot.sendPhoto(chatId, outputElement)
+    // }
+    await bot.sendPhoto(chatId, output.data[0].url)
+
     return bot.sendMessage(
       msg.chat.id,
       'Оберіть дію',
